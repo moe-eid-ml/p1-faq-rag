@@ -25,6 +25,8 @@ def detect_lang(s: str) -> str:
 def load_docs():
     docs = []
     for p in sorted(glob.glob("docs/**/*.txt", recursive=True)):
+        if "/_archive/" in p.replace("\\", "/"): 
+            continue
         with open(p, "r", encoding="utf-8") as f:
             content = f.read().strip()
         fname = os.path.basename(p)
@@ -76,13 +78,13 @@ def _prefer_lang(order_idxs, q_lang, k):
             break
     return chosen
 
-def answer(query, k=3, mode="Semantic", include="", lang="auto"):
+def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     if not query.strip():
         return "Ask a question.", ""
 
     q_lang = lang if lang in ("de", "en", "ar") else detect_lang(query)
     includes = [s.strip().lower() for s in include.split(",") if s.strip()] or None
-
+    excludes = [s.strip().lower() for s in exclude.split(",") if s.strip()] or None
     if mode == "TF-IDF":
         passages, scores = tfidf.search(query, k=max(k * 3, 12))
         order = np.argsort(scores)[::-1]
@@ -116,9 +118,8 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto"):
         order_idxs = scores.argsort()[::-1].tolist()
 
     # optional filename filter
-    if includes:
-        order_idxs = [i for i in order_idxs if file_ok(docs[i]["path"], includes, None)]
-
+    if includes or excludes:
+        order_idxs = [i for i in order_idxs if file_ok(docs[i]["path"], includes, excludes)]
     # hard language filter if user selected (keep only that lang if we have hits)
     if lang in ("de", "en", "ar"):
         filtered = [i for i in order_idxs if docs[i]["lang"] == lang]
@@ -147,7 +148,7 @@ with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
     with gr.Row():
         q = gr.Textbox(label="Your question", lines=4, scale=3, placeholder="Ask in English, Deutsch, or العربية")
         k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
-        mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="Semantic", label="Retrieval mode")
+        mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="Hybrid", label="Retrieval mode")
         include = gr.Textbox(
             label="Include filenames (comma-separated, optional)",
             placeholder="e.g. wohngeld, faq",

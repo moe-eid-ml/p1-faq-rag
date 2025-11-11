@@ -23,3 +23,22 @@ python app.py
   - TF-IDF: **P@1 = 0.80**, **R@1 = 0.80**  
   - Semantic: **P@1 = 1.00**, **R@1 = 1.00**
 python cli.py eval --both -k 3 --include faq
+## Wohngeld MVP (Multilingual)
+
+**Corpus:** `docs/wohngeld` (DE/EN/AR). Other texts archived and excluded from index.  
+**Default mode:** Hybrid (RRF).  
+**UI tip:** set **Include** → `wohngeld`; use **Language (override)** for strict DE/EN/AR.
+
+### Eval — `data/wohngeld_eval.jsonl`
+**k=3 (Include=wohngeld)**  
+- TF-IDF: **P@3 = 0.40**, **R@3 = 1.00**  
+- Semantic: **P@3 = 0.40**, **R@3 = 1.00**  
+- Hybrid: **P@3 = 0.40**, **R@3 = 1.00**
+
+**k=1 (Include=wohngeld)**  
+- Hybrid: **P@1 = 0.80**, **R@1 = 0.70**
+
+### Run
+```bash
+source .venv/bin/activate
+python app.py
