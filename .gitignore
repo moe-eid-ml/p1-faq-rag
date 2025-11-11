@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+
+# OS / tools
+.DS_Store
+
+# App/data caches
+.chroma/
+*.db
+*.sqlite
+logs/
