@@ -24,7 +24,7 @@ def detect_lang(s: str) -> str:
 
 def load_docs():
     docs = []
-    for p in sorted(glob.glob("docs/*.txt")):
+    for p in sorted(glob.glob("docs/**/*.txt", recursive=True)):
         with open(p, "r", encoding="utf-8") as f:
             content = f.read().strip()
         fname = os.path.basename(p)
@@ -79,6 +79,7 @@ def _prefer_lang(order_idxs, q_lang, k):
 def answer(query, k=3, mode="Semantic", include="", lang="auto"):
     if not query.strip():
         return "Ask a question.", ""
+
     q_lang = lang if lang in ("de", "en", "ar") else detect_lang(query)
     includes = [s.strip().lower() for s in include.split(",") if s.strip()] or None
 
@@ -87,7 +88,29 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto"):
         order = np.argsort(scores)[::-1]
         idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
         order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
-    else:
+
+    elif mode == "Hybrid":
+        # Semantic ranking
+        q_emb = embedder.encode(query, convert_to_numpy=True)
+        sem_scores = cos_scores_np(q_emb, doc_embeddings)
+        sem_order = sem_scores.argsort()[::-1].tolist()
+
+        # TF-IDF ranking (wider pool)
+        passages, scores = tfidf.search(query, k=max(k * 10, 200))
+        order = np.argsort(scores)[::-1]
+        idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+        tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+
+        # Reciprocal Rank Fusion (RRF)
+        k0 = 60.0
+        rrf = {}
+        for r, i in enumerate(sem_order):
+            rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+        for r, i in enumerate(tf_order):
+            rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+        order_idxs = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
+
+    else:  # Semantic
         q_emb = embedder.encode(query, convert_to_numpy=True)
         scores = cos_scores_np(q_emb, doc_embeddings)
         order_idxs = scores.argsort()[::-1].tolist()
@@ -95,13 +118,17 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto"):
     # optional filename filter
     if includes:
         order_idxs = [i for i in order_idxs if file_ok(docs[i]["path"], includes, None)]
-    # hard language filter if user selected
+
+    # hard language filter if user selected (keep only that lang if we have hits)
     if lang in ("de", "en", "ar"):
-      filtered = [i for i in order_idxs if docs[i]["lang"] == lang]
-      if filtered:
-        order_idxs = filtered
+        filtered = [i for i in order_idxs if docs[i]["lang"] == lang]
+        if filtered:
+            order_idxs = filtered
+
     chosen = _prefer_lang(order_idxs, q_lang, k)
     top = [docs[i] for i in chosen]
+    if not top:
+        return "No results.", ""
     answer_text = top[0]["text"]
     sources = "\n\n".join(
         f"[{j+1}] {d['text']} (from {os.path.basename(d['path'])}, lang={d['lang']})"
@@ -120,10 +147,10 @@ with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
     with gr.Row():
         q = gr.Textbox(label="Your question", lines=4, scale=3, placeholder="Ask in English, Deutsch, or العربية")
         k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
-        mode = gr.Radio(choices=["Semantic","TF-IDF"], value="Semantic", label="Retrieval mode")
+        mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="Semantic", label="Retrieval mode")
         include = gr.Textbox(
             label="Include filenames (comma-separated, optional)",
-            placeholder="e.g. faq, zahlung",
+            placeholder="e.g. wohngeld, faq",
             value="",
             scale=1
         )
