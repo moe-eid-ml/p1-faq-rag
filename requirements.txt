@@ -1,0 +1,8 @@
+sentence-transformers>=3.0
+chromadb
+pypdf
+gradio
+pandas
+pytest
+langdetect
+langdetect

@@ -1,0 +1,169 @@
+FAQ zu grenzüberschreitenden
+Zahlungsmeldungen
+Die grenzüberschreitenden Zahlungsmeldungen dienen der Erstellung der Zahlungsbilanz der
+Bundesrepublik Deutschland und der Europäischen Währungsunion. Sie liefert den für die
+Wirtschafts- und Währungspolitik zuständigen Stellen, aber auch Verbänden und Unternehmen
+umfassende und zuverlässige Informationen über den deutschen Außenwirtschaftsverkehr.
+Inhalt
+1) Wer ist meldepflichtig und was ist zu melden? .......................................................... 2
+2) Was versteht man unter den Begriffen „Inländer“ und „Ausländer“ im Sinne der
+AWV? ........................................................................................................................ 2
+3) Was ist unter dem Begriff „Zahlung“ zu verstehen? ................................................... 2
+4) Welche grenzüberschreitenden Transaktionen sind meldebefreit? ............................ 2
+5) Sind reine Kontoüberträge meldepflichtig? ................................................................ 3
+6) Sind Bargeldmitnahmen in das beziehungsweise vom Ausland nach AWV
+meldepflichtig? .......................................................................................................... 3
+7) Wie kann die Meldung eingereicht werden? .............................................................. 3
+8) Können auch selbstprogrammierte Einreichungsformate eingesetzt werden? ........... 3
+9) Was hat ein Neueinreicher vor der erstmaligen Melde-Einreichung zu beachten? .... 4
+10) Wie und wo erhält man eine Meldenummer? ............................................................ 4
+11) Wo liegt der Unterschied zwischen einer „Meldenummer“ und einer
+„Firmennummer“? ..................................................................................................... 4
+12) Welche Erhebungsschaubilder sind zu verwenden und von wem sind sie zu
+melden? .................................................................................................................... 4
+13) Bis wann muss die Meldung übermittelt werden? ...................................................... 5
+14) Kann eine Fristverlängerung beziehungsweise Meldeerleichterung beantragt
+werden? .................................................................................................................... 5
+15) Wie lange sind die Meldeunterlagen aufzubewahren? ............................................... 5
+16) Was ist zu tun, wenn keine oder eine falsche Meldung abgegeben wurde? .............. 5
+17) Wird im Namen der Deutschen Bundesbank eine telefonische Befragung zum
+Reiseausgabenverhalten durchgeführt? .................................................................... 6
+Seite 1 von 6
+
+1) Wer ist meldepflichtig und was ist zu melden?
+Gemäß § 11 Außenwirtschaftsgesetz (AWG) in Verbindung mit §§ 67 ff.
+Außenwirtschaftsverordnung (AWV) haben Inländer (in Deutschland ansässige natürliche und
+juristische Personen) Zahlungen von mehr als 50.000 Euro oder Gegenwert zu melden, die sie
+von Ausländern (im Ausland ansässige natürliche und juristische Personen) oder für deren
+Rechnung von Inländern entgegennehmen (eingehende Zahlungen) oder an Ausländer oder für
+deren Rechnung an Inländer leisten (ausgehende Zahlungen).
+Die Meldefreigrenze von 50.000 Euro findet bei der Ermittlung der zu meldenden Umsätze auf
+Zahlungen für Wertpapiererträge (Erhebungsschaubild ZABILC1/ ehemals Z11) und
+Kartenumsätze im Reiseverkehr (Erhebungsschaubild ZABILC3/ ehemals Z12) keine Anwendung.
+2) Was versteht man unter den Begriffen „Inländer“ und „Ausländer“ im
+Sinne der AWV?
+Die Begriffe „Inländer“ und „Ausländer“ stellen nicht auf die Staatsangehörigkeit, sondern auf den
+Unternehmenssitz beziehungsweise Wohnsitz oder gewöhnlichen Aufenthalt einer Privatperson ab
+(Residenzprinzip). So ist in der Regel ein Deutscher, der länger als ein Jahr im Ausland lebt, als
+„Ausländer“, eine Person mit ausländischer Staatsangehörigkeit, die länger als ein Jahr in
+Deutschland lebt, als „Inländer“ anzusehen.
+3) Was ist unter dem Begriff „Zahlung“ zu verstehen?
+Als Zahlung gelten Überweisungen, Barzahlungen, Zahlungen mittels Lastschrift, Scheck sowie
+das Einbringen von Sachen und Rechten in Unternehmen, Zweigniederlassungen und
+Betriebsstätten sowie die Übertragung von Kryptowerten im Sinne des § 1 Absatz 11 Satz 4 des
+Kreditwesengesetzes. Des Weiteren fallen unter den Begriff "Zahlung" Aufrechnungen und
+Verrechnungen, die grundsätzlich brutto zu melden sind. Werden zum Beispiel beim Netting-
+Verfahren gegenseitig geschuldete Beträge untereinander aufgerechnet, sind die den
+Verrechnungen zugrundeliegenden Bruttobeträge entsprechend den Gutschriften und Belastungen
+unter Angabe des Grundgeschäftes als ein- und ausgehende Zahlungen anzuzeigen. Die
+auszugleichenden Salden sind generell nicht zu melden.
+4) Welche grenzüberschreitenden Transaktionen sind meldebefreit?
+- Zahlungen für Warenausfuhren und -einfuhren (die Waren werden physisch nach Deutschland
+ein- oder aus Deutschland ausgeführt);
+- Auszahlung und Rückzahlung von Krediten und Einlagen mit einer vereinbarten Laufzeit bis zu
+12 Monaten (Zinsen aus diesen Geschäften sind hingegen zu melden);
+Seite 2 von 6
+- Zahlungen zwischen Ausländern, die von Inländern weitergeleitet werden (durchlaufende Pos-
+ten);
+- Beträge, die die jeweiligen Meldefreigrenzen nicht überschreiten;
+- Zinszahlungen für ausländische Anleihen und Geldmarktpapiere.
+5) Sind reine Kontoüberträge meldepflichtig?
+Reine Kontoüberträge (vom Inlandskonto auf das Auslandskonto oder umgekehrt) sind nach §§ 67
+ff. AWV nicht meldepflichtig. Es ist zu beachten, dass Zahlungen, die von dem Auslandskonto an
+Ausländer geleistet oder auf dem Auslandskonto von Ausländern entgegengenommen werden,
+gemäß dem jeweiligen Grundgeschäft gemäß Erhebungsschaubild ZABILC1/ ehemals Z4 zu
+melden sind.
+6) Sind Bargeldmitnahmen in das beziehungsweise vom Ausland nach AWV
+meldepflichtig?
+Nein, Bargeldmitnahmen sind laut Außenwirtschaftsverordnung nicht meldepflichtig.
+Nähere Angaben und Erläuterungen über Bargeldkontrollen sowie Regelungen zur Anmeldungs-
+und Auskunftspflicht im Verkehr mit Drittländern und innerhalb der Europäischen Union finden Sie
+im Internet Zoll online - Barmittel.
+7) Wie kann die Meldung eingereicht werden?
+Die Meldungen sind in elektronischer Form bei der Deutschen Bundesbank einzureichen. Hierzu
+werden verschiedene Verfahren angeboten. Die einfachste Möglichkeit ist die Nutzung des
+Allgemeinen Meldeportals Statistik (AMS). Nähere Informationen finden Sie auf der Webseite zum
+AMS. Weitere Einreichungsformate werden im Bereich der elektronischen Einreichung über
+ExtraNet angeboten.
+Weitergehende technische Fragen stellen Sie gerne an AMS@bundesbank.de oder die Hotline
+069 9566 37707, an die Sie sich Montag – Freitag in der Zeit von 9 Uhr bis 15 Uhr wenden
+können.
+8) Können auch selbstprogrammierte Einreichungsformate eingesetzt
+werden?
+Ja, für die Einreichung von Meldungen zur AWV steht Ihnen das Format XML zur Verfügung.
+Weitergehende Informationen finden Sie unter Einreichung im XML-Format.
+Seite 3 von 6
+9) Was hat ein Neueinreicher vor der erstmaligen Melde-Einreichung zu
+beachten?
+Vor der Registrierung für die elektronische Einreichung ist eine Meldenummer zu beantragen. Die
+Meldenummer ist sowohl für Transaktions- als auch Bestandsmeldungen zu verwenden.
+Für regelmäßige Zahlungsmeldungen wie auch für Bestandsmeldungen über
+Unternehmensbeteiligungen benötigen Privatpersonen ebenfalls eine Meldenummer.
+Kreditinstitute haben anstelle einer Meldenummer die jeweilige Bankleitzahl zu verwenden.
+10) Wie und wo erhält man eine Meldenummer?
+Die Zuteilung einer Meldenummer erfolgt über einen Antrag, der auf der Homepage der Deutschen
+Bundesbank bereitgestellt ist. Der ausgefüllte Antrag kann per E-Mail
+(aw-stammdaten@bundesbank.de) an die Deutsche Bundesbank gesendet werden.
+Privatpersonen haben im Bereich der Transaktionsmeldungen die Möglichkeit bis zu drei
+Zahlungen über 50.000 Euro telefonisch oder per E-Mail zu melden. Für regelmäßige
+Zahlungsmeldungen benötigen Privatpersonen eine Meldenummer. Detaillierte Informationen
+finden Sie unter: Meldenummer ¦ Deutsche Bundesbank.
+11) Wo liegt der Unterschied zwischen einer „Meldenummer“ und einer
+„Firmennummer“?
+Der Begriff „Firmennummer“ ist synonym mit „Meldenummer“ anzusehen. Aus Gründen der
+Vereinheitlichung des außenwirtschaftlichen Meldewesens wird jedoch nur noch der Begriff
+„Meldenummer“ verwendet.
+12) Welche Erhebungsschaubilder sind zu verwenden und von wem sind sie
+zu melden?
+Es ist das
+­ Erhebungsschaubild ZABILC1 – Zahlungen für Dienstleistungen, Transithandel,
+Direktinvestitionen, Kapitalverkehr (einschließlich Wertpapier- und Zinserträge),
+­ Erhebungsschaubild ZABILC2 – Zahlungen für Wertpapiergeschäfte und Finanzderivate und
+­ Erhebungsschaubild ZABILC3 – Zahlungen für den Reiseverkehr (Karten-Umsätze)
+zur AWV zu verwenden.
+Seite 4 von 6
+Dabei werden die Erhebungsschaubilder ZABILC1 und ZABILC2 gemeldet von Privatpersonen,
+Wirtschaftsunternehmen, Geldinstituten & öffentlichen Stellen. Das Erhebungsschaubild ZABILC3
+muss ausschließlich von Geldinstituten gemeldet werden.
+13) Bis wann muss die Meldung übermittelt werden?
+Die Meldung ist an die Deutsche Bundesbank spätestens bis zum 7. Werktag nach Ende des
+Berichtsmonats zu übermitteln.
+Einreichungsfrist | Deutsche Bundesbank
+14) Kann eine Fristverlängerung beziehungsweise Meldeerleichterung
+beantragt werden?
+Abweichende Regelungen zu den genannten Fristen können grundsätzlich nicht gewährt werden.
+Als Meldeerleichterung besteht im Rahmen einer Ausnahmegenehmigung die Möglichkeit, die
+Meldung gemäß Erhebungsschaubild ZABILC1 zur AWV nicht bei Zahlung, sondern bei
+Eigentumsübertrag beziehungsweise bei Einbuchung der Forderungen und Verbindlichkeiten auf
+Konten der Buchhaltung zu erstellen. Eine entsprechende Ausnahmegenehmigung kann formlos
+per E-Mail (Leistungsbilanz-Statistik@bundesbank.de) beantragt werden.
+15) Wie lange sind die Meldeunterlagen aufzubewahren?
+Zum Nachweis der Einhaltung der Meldebestimmung sollen die Meldeunterlagen mindestens drei
+Jahre aufbewahrt werden. Die Einzelgeschäfte sollten anhand geeigneter Unterlagen
+nachvollziehbar sein.
+16) Was ist zu tun, wenn keine oder eine falsche Meldung abgegeben wurde?
+Wurde für einen Monat fälschlicherweise keine Meldung abgegeben, so ist dies unverzüglich
+nachzuholen. Dabei ist auf der Meldung der betreffende Monat anzugeben, in dem die Transaktion
+stattgefunden hat und nicht der aktuelle Monat, in dem die Meldung erstellt beziehungsweise
+eingereicht wird.
+Wird im Nachhinein bei einer abgegebenen Meldung ein Fehler festgestellt, ist zeitnah eine als
+solche gekennzeichnete (zum Beispiel im Feld “Zweck der Zahlung“) Korrekturmeldung
+abzugeben. Zunächst ist die fehlerhafte Meldeposition durch eine mit „Minus“-Zeichen
+gekennzeichnete Meldeposition zu stornieren und anschließend eine neue Meldeposition mit den
+korrekten Daten zu erstellen (in AMS erfolgt die Stornierung und Gegenbuchung in Form einer
+Seite 5 von 6
+„Minus“-Position bei Eingabe der Korrektur automatisch). Wichtig ist hierbei, dass die neu erstellte
+Meldeposition sich auf den ursprünglichen Meldemonat bezieht.
+In diesem Zusammenhang ist zu beachten, dass die Korrekturmeldung nicht alle Transaktionen
+der ehemals eingereichten Meldung enthält, sondern nur die zu berichtigenden beziehungsweise
+nachzuerfassenden Transaktionen aufgelistet werden.
+17) Wird im Namen der Deutschen Bundesbank eine telefonische Befragung
+zum Reiseausgabenverhalten durchgeführt?
+Die Ermittlung der Reiseausgaben für die deutsche Zahlungsbilanz erfolgt seit dem Jahr 2001 auf
+Basis einer Haushaltsbefragung. Im Rahmen von Telefoninterviews (Telefonumfrage) mit
+anschließender schriftlicher Befragung, gegebenenfalls per Internet, werden die Anzahl der
+durchgeführten Reisen und die damit verbundenen Ausgaben der Wohnbevölkerung ermittelt. Die
+Telefonnummern werden durch eine Zufallsauswahl bestimmt. Die erfragten Ergebnisse werden
+anonymisiert weiterverarbeitet und nicht an Dritte weitergegeben.
+Derzeit ist infas Institut für angewandte Sozialwissenschaft GmbH mit der Erhebung beauftragt.
+Seite 6 von 6
