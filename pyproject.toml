@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-cli"
+version = "0.1.0"
+dependencies = ["typer","rich","regex","python-dotenv"]
+
+[project.scripts]
+codex = "tools.codex_cli.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tools*"]
