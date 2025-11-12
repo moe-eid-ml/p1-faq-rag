@@ -1,0 +1,8 @@
+repos:
+- repo: local
+  hooks:
+  - id: codex-validate
+    name: codex validate (Arabic-only Q/A)
+    entry: .venv/bin/codex validate
+    language: system
+    pass_filenames: false
