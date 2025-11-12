@@ -13,3 +13,10 @@ __pycache__/
 *.db
 *.sqlite
 logs/
+.venv/
+build/
+__pycache__/
+*.pyc
+.pytest_cache/
+.whoami.terminal
+.DS_Store
