@@ -42,3 +42,21 @@ python cli.py eval --both -k 3 --include faq
 ```bash
 source .venv/bin/activate
 python app.py
+
+## Tooling
+
+We use a small Typer CLI to keep the FAQ corpus clean and builds reproducible.
+
+**Commands**
+- `codex validate` — ensures Q/A are Arabic-only and blocks banned terms.
+- `codex slugs` — enforces `slug__YYYY-MM-DD.txt` filenames.
+- `codex embed` — builds `build/index.json` from `docs/faq/ar`.
+- `codex sync` — validate → slugs → embed (one command).
+
+**Dev/CI**
+- Local guard: pre-commit runs `codex validate` on each commit.
+- CI: `.github/workflows/faq-ci.yml` validates and builds on push/PR.
+
+**Security hygiene**
+- No secrets committed. Use `.env.example` (not `.env`).
+- `.gitignore` excludes `.venv/`, `build/`, `__pycache__/`, `.pytest_cache/`.
