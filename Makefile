@@ -1,14 +1,16 @@
-VENV=.venv
+PY := .venv/bin/python
+PT := .venv/bin/pytest
 
-init:
-	/opt/homebrew/bin/python3.12 -m venv $(VENV) || true
-	$(VENV)/bin/pip install -r requirements.txt
+.PHONY: run test eval eval-h1
 
-convert: init
-	. $(VENV)/bin/activate; python convert_pdf.py
+run:
+	$(PY) app.py
 
-run: init convert
-	. $(VENV)/bin/activate; python app.py
+test:
+	PYTHONPATH=. $(PT) -q
 
-run-share: init convert
-	. $(VENV)/bin/activate; python -c "import app; app.demo.launch(share=True)"
+eval:
+	$(PY) cli.py eval --both -k 3 --file data/wohngeld_eval.jsonl --include wohngeld
+
+eval-h1:
+	$(PY) cli.py eval --mode hybrid -k 1 --file data/wohngeld_eval.jsonl --include wohngeld
