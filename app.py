@@ -1,9 +1,12 @@
 import os, glob, re, json
 from datetime import datetime
+import csv
 import gradio as gr
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from tfidf import TfidfRetriever
+import json
+from eval import evaluate_run
 
 # ----------------- Lang detect -----------------
 MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -85,6 +88,17 @@ def _prefer_lang(order_idxs, q_lang, k):
     return chosen
 
 # ----------------- Answer -----------------
+def log_query(row: dict):
+    os.makedirs("logs", exist_ok=True)
+    path = os.path.join("logs", "queries.csv")
+    header = ["ts","query","mode","k","include","exclude","lang_forced","lang_detected","top_files","top_langs","answer_len","corpus_size"]
+    write_header = not os.path.exists(path)
+    with open(path, "a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=header)
+        if write_header:
+            w.writeheader()
+        w.writerow(row)
+
 def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     if not query.strip():
         return "Ask a question.", ""
@@ -171,23 +185,101 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         lines.append(f"[{j+1}] {snippet}  — `{os.path.basename(d['path'])}` • {d['lang']} • updated {ts}")
 
     answer_text = top[0]["text"]
-    sources = header + "\n\n" + "\n\n".join(lines)
+    sources = "### Sources\n" + header + "\n\n" + "\n\n".join(lines)
+    log_query({
+        "ts": datetime.now().isoformat(timespec="seconds"),
+        "query": query,
+        "mode": mode,
+        "k": k,
+        "include": include or "",
+        "exclude": exclude or "",
+        "lang_forced": lang,
+        "lang_detected": q_lang,
+        "top_files": "|".join(os.path.basename(d["path"]) for d in top),
+        "top_langs": "|".join(d["lang"] for d in top),
+        "answer_len": len(answer_text),
+        "corpus_size": len(docs),
+    })
     return answer_text, sources
 
 # ----------------- In-app Eval (lazy import to avoid circular) -----------------
 from eval import evaluate_run
 def eval_ui(k, include, lang):
-    from cli import load_eval, ground_truth_ids, predict_ids  # lazy import
+    # self-contained eval (no cli import)
     k = int(k)
-    items = load_eval("data/wohngeld_eval.jsonl")
     includes = [s.strip().lower() for s in (include or "").split(",") if s.strip()] or None
-    gt = [ground_truth_ids(it, includes, None) for it in items]
+
+    # load eval items
+    items = []
+    try:
+        with open("data/wohngeld_eval.jsonl", "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    items.append(json.loads(line))
+    except Exception as e:
+        return f"**Eval error:** {e}"
+
+    def _ground_truth_ids(item):
+        kw = [x.lower() for x in item.get("keywords", [])]
+        lang_item = item.get("lang", "en")
+        ids = []
+        for i, d in enumerate(docs):
+            if d["lang"] != lang_item:
+                continue
+            if not file_ok(d["path"], includes, None):
+                continue
+            text = d["text"].lower()
+            if not kw or any(kword in text for kword in kw):
+                ids.append(i)
+        return ids
+
+    def _predict_ids(query, mode):
+        m = mode.lower()
+        if m == "tfidf":
+            passages, scores = tfidf.search(query, k=max(k * 3, 12))
+            order = np.argsort(scores)[::-1]
+            idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+        elif m == "hybrid":
+            q_emb = embedder.encode(query, convert_to_numpy=True)
+            sem_scores = cos_scores_np(q_emb, doc_embeddings)
+            sem_order = sem_scores.argsort()[::-1].tolist()
+            passages, scores = tfidf.search(query, k=max(k * 10, 200))
+            order = np.argsort(scores)[::-1]
+            idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+            k0 = 60.0
+            rrf = {}
+            for r, i in enumerate(sem_order):
+                rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+            for r, i in enumerate(tf_order):
+                rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+            ranked = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
+        else:  # semantic
+            q_emb = embedder.encode(query, convert_to_numpy=True)
+            scores = cos_scores_np(q_emb, doc_embeddings)
+            ranked = scores.argsort()[::-1].tolist()
+
+        # filename filter + language preference to top-k
+        ranked = [i for i in ranked if file_ok(docs[i]["path"], includes, None)]
+        q_lang = detect_lang(query)
+        ranked = _prefer_lang(ranked, q_lang, k)
+        return ranked
+
+    gt = [_ground_truth_ids(it) for it in items]
     lines = []
     for m in ["tfidf", "semantic", "hybrid"]:
-        preds = [predict_ids(it["q"], m, k, includes, None) for it in items]
+        preds = [_predict_ids(it["q"], m) for it in items]
         res = evaluate_run(gt, preds, k=k)
         lines.append(f"- {m.title()}: **P@{k} = {res['p_at_k']:.2f}**, **R@{k} = {res['r_at_k']:.2f}**")
     return "### Eval (data/wohngeld_eval.jsonl)\n" + "\n".join(lines)
+def _reset_defaults():
+    # k, mode, include, exclude, lang
+    return 3, "Hybrid", "wohngeld", "", "auto"
+def _reset_defaults():
+    # k, mode, include, exclude, lang
+    return 3, "Hybrid", "wohngeld", "", "auto"
 
 # ----------------- UI -----------------
 CSS = """
@@ -204,7 +296,7 @@ with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
         include = gr.Textbox(
             label="Include filenames (comma-separated, optional)",
             placeholder="e.g. wohngeld, faq",
-            value="",
+            value="wohngeld",
             scale=1
         )
         exclude = gr.Textbox(
@@ -224,7 +316,8 @@ with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
 
     go = gr.Button("Search")
     go.click(answer, [q, k, mode, include, lang, exclude], [ans, src])
-
+    reset = gr.Button("Reset filters")
+    reset.click(_reset_defaults, [], [k, mode, include, exclude, lang])
     with gr.Row():
         ebtn = gr.Button("Evaluate (P@K / R@K)")
         emd = gr.Markdown()
