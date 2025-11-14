@@ -60,3 +60,17 @@ We use a small Typer CLI to keep the FAQ corpus clean and builds reproducible.
 **Security hygiene**
 - No secrets committed. Use `.env.example` (not `.env`).
 - `.gitignore` excludes `.venv/`, `build/`, `__pycache__/`, `.pytest_cache/`.
+
+## 📊 Current Metrics (2025-11-14)
+Scope: **Include=wohngeld** • Eval file: `data/wohngeld_eval.jsonl`
+
+- **P@1 (Hybrid, k=1):** 0.80
+- **P@3 (k=3):**
+  - **TF-IDF:** P@3 = 0.60 • R@3 ≈ 0.65
+  - **Semantic:** P@3 ≈ 0.47 • R@3 ≈ 0.55–0.60
+  - **Hybrid:** P@3 ≈ 0.47 • R@3 ≈ 0.55
+
+Notes:
+- Corpus: `docs/wohngeld/` (DE/EN/AR) + official DE PDF (chunked ~400 chars).
+- UI: TF-IDF default, Hybrid/Semantic available. Markdown sources with keyword highlights.
+- Tools: in-app **Evaluate (P@K/R@K)**, **Reset filters**, CSV query logging.
