@@ -1,0 +1,14 @@
+[Meta] Kurzreferenz: Erforderliche Unterlagen für Wohngeld (DE)
+
+Erforderliche Unterlagen (typisch):
+- Personalausweis oder Reisepass
+- Mietvertrag (aktuell) und Mietbescheinigung
+- Einkommensnachweise der letzten 12 Monate (z. B. Lohnabrechnungen, Rentenbescheid)
+- Nachweise zu Nebenkosten und Heizkosten
+- Kontoauszüge (aktueller Zeitraum, je nach Behörde)
+- Bei Studierenden: Immatrikulationsbescheinigung; ggf. BAföG-Bescheid (falls vorhanden)
+- Änderungen (Einkommen, Miete, Haushaltsgröße) zeitnah mitteilen
+
+Aliasfragen (TF-IDF-Boost):
+- Welche Unterlagen brauche ich für den Wohngeldantrag?
+- Welche Unterlagen brauche ich für Wohngeld?

@@ -1,0 +1,17 @@
+[Meta] Kurzreferenz: Berechnung & Höhe (Wohngeld, DE)
+
+Grundprinzip
+- Wohngeld = Zuschuss zu den Wohnkosten; Höhe hängt ab von: Haushaltsgröße, anrechenbarem Einkommen, Mietstufe/Belastung.
+
+Wesentliche Faktoren
+- Haushaltsgröße: mehr Personen → höhere zulässige Miete/Belastung.
+- Mietstufe des Wohnorts (A–VII): bestimmt Höchstbeträge.
+- Anrechenbares Einkommen: Brutto minus bestimmte Freibeträge/Abzüge.
+- Angemessene Miete/Belastung: nur der anerkannte Teil geht in die Berechnung ein.
+
+Hinweise
+- Bewilligungszeitraum meist 12 Monate; Änderungen (Einkommen/Miete/Haushalt) melden → Neuberechnung.
+- Vorläufige Orientierung per Wohngeldrechner; verbindlich ist nur der Bescheid.
+
+Stichwörter
+berechnung, höhe, haushaltsgröße, mietstufe, einkommen, freibeträge, höchstbetrag, wohngeldrechner

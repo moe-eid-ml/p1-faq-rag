@@ -1,0 +1,22 @@
+[Meta] Kurzreferenz: Antragstellung & Zuständigkeit (Wohngeld, DE)
+
+Zuständige Stelle
+- Wohngeldbehörde/Wohngeldstelle der Wohnort-Kommune (häufig beim Rathaus/Bürgeramt).
+- Zuständig ist der Hauptwohnsitz.
+
+Antragstellung (Wege)
+- Persönlich vor Ort, schriftlich per Post, oft auch Online-Antrag (je nach Kommune/Portal).
+- Formulare/Erläuterungen stellt die Kommune bereit; Belege im Original/Kopie nach Vorgabe.
+
+Wichtig
+- Antragsmonat zählt: rechtzeitig einreichen → Nachzahlung ab Monat der Antragstellung möglich.
+- Vollständige Unterlagen beschleunigen; fehlende Nachweise führen zu Rückfragen/Verzögerung.
+- Änderungen (Einkommen/Miete/Haushalt) unverzüglich mitteilen.
+
+Stichwörter
+antrag, antragstellung, wohngeldstelle, zuständigkeit, rathaus, bürgeramt, online, post, frist, antragsmonat, nachzahlung
+
+Aliasfragen (TF-IDF-Boost):
+- Wo stelle ich den Wohngeldantrag?
+- Wo stelle ich den Wohngeldantrag in meiner Stadt?
+- Bei welcher Stelle beantrage ich Wohngeld?
