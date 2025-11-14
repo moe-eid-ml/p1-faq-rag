@@ -1,24 +1,21 @@
-# Python
+# venvs & caches
+.venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
-.venv/
-.env
+*.eggs/
+.cache/
+.gradio/
 
-# OS / tools
-.DS_Store
-
-# App/data caches
-.chroma/
-*.db
-*.sqlite
+# local data/logs
 logs/
-.venv/
-build/
-__pycache__/
-*.pyc
-.pytest_cache/
-.whoami.terminal
-.DS_Store
+*.log
 
-.env
+# vector db caches (if you add them later)
+.chroma/
+.faiss/
+
+# OS/editor junk
+.DS_Store
+.idea/
+.vscode/
