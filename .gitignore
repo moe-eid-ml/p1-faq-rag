@@ -19,3 +19,7 @@ logs/
 .DS_Store
 .idea/
 .vscode/
+
+# pytest cache, build artifacts
+.pytest_cache/
+build/

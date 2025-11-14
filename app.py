@@ -114,33 +114,27 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
 
     elif mode == "Hybrid":
-        # semantic ranking
+        # 1) semantic query embedding (once)
         q_emb = embedder.encode(query, convert_to_numpy=True)
         sem_scores = cos_scores_np(q_emb, doc_embeddings)
-        sem_order = sem_scores.argsort()[::-1].tolist()
-        # tf-idf ranking (wider pool)
-        passages, scores = tfidf.search(query, k=max(k * 10, 200))
+
+        # 2) lexical candidate pool (broad)
+        passages, scores = tfidf.search(query, k=max(200, k * 50))
         order = np.argsort(scores)[::-1]
         idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
         tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
-        # reciprocal rank fusion
-        k0 = 60.0
-        rrf = {}
-        for r, i in enumerate(sem_order):
-            rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
-        for r, i in enumerate(tf_order):
-            rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
-        order_idxs = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
 
+        # 3) rerank TF-IDF top-N by semantic similarity
+        CAND = 200
+        candidates = tf_order[:CAND]
+        order_idxs = sorted(candidates, key=lambda i: float(sem_scores[i]), reverse=True)
     else:  # Semantic
         q_emb = embedder.encode(query, convert_to_numpy=True)
         scores = cos_scores_np(q_emb, doc_embeddings)
         order_idxs = scores.argsort()[::-1].tolist()
-
-    # filename filter
+    # filename filter (run AFTER we have order_idxs)
     if includes or excludes:
         order_idxs = [i for i in order_idxs if file_ok(docs[i]["path"], includes, excludes)]
-
     # forced-language with backfill up to K
     if lang in ("de", "en", "ar"):
         same = [i for i in order_idxs if docs[i]["lang"] == lang]
@@ -184,7 +178,38 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         snippet = _short(highlight(d['text']))
         lines.append(f"[{j+1}] {snippet}  — `{os.path.basename(d['path'])}` • {d['lang']} • updated {ts}")
 
-    answer_text = top[0]["text"]
+    # pick a proper answer: skip alias blocks, meta headers, and keyword-only lists
+    def _strip_meta(s: str) -> str:
+        return re.sub(r'^\s*\[meta\][^\n]*\n?', '', s, flags=re.IGNORECASE).strip()
+
+    def _is_keyword_block(s: str) -> bool:
+        s2 = s.strip().lower()
+        if s2.startswith("stichwörter"):
+            return True
+        # many commas but no sentence enders → likely just keywords
+        if s.count(",") >= 4 and not re.search(r'[.!؟!?]', s):
+            return True
+        return False
+
+    # candidates = non-alias texts from top-K
+    cand_texts = [d["text"] for d in top if "aliasfragen" not in d["text"].lower()]
+
+    # prefer texts that don't start with [Meta]; then the rest
+    primary = [t for t in cand_texts if not t.lstrip().lower().startswith("[meta]")]
+    ordered = primary + [t for t in cand_texts if t not in primary]
+
+    answer_text = ""
+    for t in ordered:
+        stripped = _strip_meta(t)
+        if _is_keyword_block(stripped):
+            continue
+        if len(stripped) >= 40:  # avoid too-short after stripping
+            answer_text = stripped
+            break
+    if not answer_text:
+        # ultimate fallback: first available text (strip meta anyway)
+        fallback = cand_texts[0] if cand_texts else top[0]["text"]
+        answer_text = _strip_meta(fallback)
     sources = "### Sources\n" + header + "\n\n" + "\n\n".join(lines)
     log_query({
         "ts": datetime.now().isoformat(timespec="seconds"),
@@ -279,7 +304,9 @@ def _reset_defaults():
     return 3, "Hybrid", "wohngeld", "", "auto"
 def _reset_defaults():
     # k, mode, include, exclude, lang
-    return 3, "Hybrid", "wohngeld", "", "auto"
+    return 3, "TF-IDF", "wohngeld", "", "auto"
+def _fill_q(s: str) -> str:
+    return s or ""
 
 # ----------------- UI -----------------
 CSS = """
@@ -292,7 +319,7 @@ with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
     with gr.Row():
         q = gr.Textbox(label="Your question", lines=4, scale=3, placeholder="Ask in English, Deutsch, or العربية")
         k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
-        mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="Hybrid", label="Retrieval mode")
+        mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="TF-IDF", label="Retrieval mode")
         include = gr.Textbox(
             label="Include filenames (comma-separated, optional)",
             placeholder="e.g. wohngeld, faq",
@@ -311,11 +338,25 @@ with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
             value="auto",
             scale=1
         )
+    with gr.Row():
+        sample = gr.Dropdown(
+            label="Sample question",
+            choices=[
+                "Welche Unterlagen brauche ich für den Wohngeldantrag?",
+                "Wo stelle ich den Wohngeldantrag in meiner Stadt?",
+                "Wie lange dauert die Bearbeitung vom Wohngeld?",
+                "Wie wird die Höhe des Wohngelds berechnet?",
+                "Wann sollte ich den Weiterleistungsantrag stellen?"
+            ],
+            value=None,
+            scale=3
+        )
     ans = gr.Textbox(label="Answer", lines=16, interactive=True, show_copy_button=True, elem_id="answer_box")
     src = gr.Markdown(label="Top sources", elem_id="source_box")
 
     go = gr.Button("Search")
     go.click(answer, [q, k, mode, include, lang, exclude], [ans, src])
+    sample.change(_fill_q, [sample], [q])
     reset = gr.Button("Reset filters")
     reset.click(_reset_defaults, [], [k, mode, include, exclude, lang])
     with gr.Row():
