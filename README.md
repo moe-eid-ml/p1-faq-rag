@@ -71,7 +71,7 @@ Scope: **Include=wohngeld** • Eval file: `data/wohngeld_eval.jsonl`
   - **Hybrid:** P@3 ≈ 0.47 • R@3 ≈ 0.55
 
 Notes:
-- Corpus: `docs/wohngeld/` (DE/EN/AR) + official DE PDF (chunked ~400 chars).
+- Corpus: `docs/wohngeld/` (DE/EN/AR) + official DE PDF (sentence-aware paragraphs, ~200 chars on average (median 177; p90 355; max 531)).
 - UI: TF-IDF default, Hybrid/Semantic available. Markdown sources with keyword highlights.
 - Tools: in-app **Evaluate (P@K/R@K)**, **Reset filters**, CSV query logging.
 
@@ -90,4 +90,4 @@ python app.py
 - **Hybrid:** P@3 ≈ **0.67**, R@3 ≈ 0.35
 - **Semantic:** P@3 ≈ **0.60**, R@3 ≈ 0.33
 
-Notes: corpus focused on Wohngeld (DE/EN/AR) + one official DE PDF (chunked ~400 chars) + targeted DE snippets (Unterlagen, Voraussetzungen, Bearbeitungszeit/Auszahlung, Antragstellung/Zuständigkeit).
+Notes: corpus focused on Wohngeld (DE/EN/AR) + one official DE PDF (sentence-aware paragraphs, ~200 chars on average (median 177; p90 355; max 531)) + targeted DE snippets (Unterlagen, Voraussetzungen, Bearbeitungszeit/Auszahlung, Antragstellung/Zuständigkeit).
