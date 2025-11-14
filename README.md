@@ -74,3 +74,20 @@ Notes:
 - Corpus: `docs/wohngeld/` (DE/EN/AR) + official DE PDF (chunked ~400 chars).
 - UI: TF-IDF default, Hybrid/Semantic available. Markdown sources with keyword highlights.
 - Tools: in-app **Evaluate (P@K/R@K)**, **Reset filters**, CSV query logging.
+
+# P1 — Wohngeld FAQ RAG (EN/DE/AR)
+
+Small, interview-ready RAG demo for German Wohngeld questions. Dual retrievers (TF-IDF + Semantic), Hybrid mode, language-aware ranking, in-app evaluation, and CSV logging.
+
+## Quickstart
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install -r requirements.txt
+python app.py
+
+## 📊 Eval (2025-11-14, 10 DE queries, Include=wohngeld, k=3)
+- **TF-IDF:** P@3 = **0.80**, R@3 ≈ 0.41
+- **Hybrid:** P@3 ≈ **0.67**, R@3 ≈ 0.35
+- **Semantic:** P@3 ≈ **0.60**, R@3 ≈ 0.33
+
+Notes: corpus focused on Wohngeld (DE/EN/AR) + one official DE PDF (chunked ~400 chars) + targeted DE snippets (Unterlagen, Voraussetzungen, Bearbeitungszeit/Auszahlung, Antragstellung/Zuständigkeit).
