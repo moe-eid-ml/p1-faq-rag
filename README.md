@@ -1,3 +1,14 @@
+---
+title: Wohngeld FAQ RAG
+emoji: 🏠
+colorFrom: blue
+colorTo: green
+sdk: gradio
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # P1 — Multilingual FAQ RAG (EN/DE/AR)
 
 Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters, and a metrics CLI.
