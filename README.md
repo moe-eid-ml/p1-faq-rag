@@ -1,3 +1,6 @@
+# Wohngeld FAQ RAG (DE/EN/AR)
+Compact RAG app for German **Wohngeld** questions. Dual retrievers (TF-IDF, Semantic) + Hybrid rerank. Gradio UI with in-app P@K/R@K evaluation. Deployed on Hugging Face.
+
 # P1 — Multilingual FAQ RAG (EN/DE/AR)
 
 Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters, and a metrics CLI.
@@ -77,7 +80,7 @@ Notes:
 
 # P1 — Wohngeld FAQ RAG (EN/DE/AR)
 
-Small, interview-ready RAG demo for German Wohngeld questions. Dual retrievers (TF-IDF + Semantic), Hybrid mode, language-aware ranking, in-app evaluation, and CSV logging.
+Small, RAG demo for German Wohngeld questions. Dual retrievers (TF-IDF + Semantic), Hybrid mode, language-aware ranking, in-app evaluation, and CSV logging.
 
 ## Quickstart
 ```bash
