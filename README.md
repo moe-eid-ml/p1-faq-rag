@@ -91,3 +91,5 @@ python app.py
 - **Semantic:** P@3 ≈ **0.60**, R@3 ≈ 0.33
 
 Notes: corpus focused on Wohngeld (DE/EN/AR) + one official DE PDF (sentence-aware paragraphs, ~200 chars on average (median 177; p90 355; max 531)) + targeted DE snippets (Unterlagen, Voraussetzungen, Bearbeitungszeit/Auszahlung, Antragstellung/Zuständigkeit).
+
+[![Live Demo — Hugging Face](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue)](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)
