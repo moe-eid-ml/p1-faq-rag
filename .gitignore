@@ -23,3 +23,6 @@ logs/
 # pytest cache, build artifacts
 .pytest_cache/
 build/
+
+# Ignore PDFs for HF Space
+*.pdf
