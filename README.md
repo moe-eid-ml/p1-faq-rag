@@ -1,4 +1,6 @@
 # Wohngeld FAQ RAG (DE/EN/AR)
+
+[![Live Demo](https://img.shields.io/badge/%F0%9F%A4%97-Live%20Demo-blue)](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)
 Compact RAG app for German **Wohngeld** questions. Dual retrievers (TF-IDF, Semantic) + Hybrid rerank. Gradio UI with in-app P@K/R@K evaluation. Deployed on Hugging Face.
 
 # P1 — Multilingual FAQ RAG (EN/DE/AR)
