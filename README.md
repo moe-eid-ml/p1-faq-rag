@@ -98,3 +98,16 @@ Notes: corpus focused on Wohngeld (DE/EN/AR) + one official DE PDF (sentence-awa
 [![Live Demo — Hugging Face](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue)](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)
 
 [![CI](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml)
+
+## Development
+
+```bash
+# run locally
+make run
+
+# tests
+make test
+
+# quick eval (defaults K=3, Include=wohngeld)
+make eval
+make eval K=5 INCLUDE=wohngeld
