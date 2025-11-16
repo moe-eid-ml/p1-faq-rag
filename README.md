@@ -118,3 +118,16 @@ make eval K=5 INCLUDE=wohngeld
 - Language-aware source preference + Include/Exclude filters
 - In-app evaluation (P@K/R@K) + CLI eval
 - One-command deploy to Hugging Face (`make space-push`)
+
+## CLI (headless)
+Query the app from the terminal without starting the UI.
+
+```bash
+# one-off
+python ask.py -m TF-IDF -k 3 -i wohngeld "Welche Unterlagen brauche ich für den Wohngeldantrag?"
+
+# with Make (defaults: MODE=TF-IDF, K=3, INCLUDE=wohngeld)
+make ask Q="Welche Unterlagen brauche ich für den Wohngeldantrag?"
+make ask Q="Bearbeitungszeit Wohngeld?" MODE=Hybrid K=5
+
+```
