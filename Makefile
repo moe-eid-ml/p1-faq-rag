@@ -20,3 +20,11 @@ test:
 .PHONY: eval
 eval:
 > PYTHONPATH=. python cli.py eval --both -k $(K) --include $(INCLUDE)
+
+.PHONY: lint
+lint:
+> ruff check .
+
+.PHONY: lint-fix
+lint-fix:
+> ruff check . --fix
