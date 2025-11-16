@@ -1,35 +1,20 @@
 import os, glob, re, json
-from datetime import datetime
-import csv
 import gradio as gr
 import numpy as np
+import csv
 from sentence_transformers import SentenceTransformer
 from tfidf import TfidfRetriever
-import json
+# if you don't have eval.py, delete the next line
 from eval import evaluate_run
+import datetime as _dt
+
+from app_pkg.lang import detect_lang, AR_RE
+MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # ----------------- Lang detect -----------------
-MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-AR_RE = re.compile(r'[\u0600-\u06FF]')
-
-def detect_lang(s: str) -> str:
-    try:
-        from langdetect import detect
-        code = detect(s)
-        if code.startswith('de'):
-            return "de"
-        if code.startswith('ar'):
-            return "ar"
-        if code.startswith('en'):
-            return "en"
-    except Exception:
-        pass
-    if AR_RE.search(s):
-        return "ar"
-    s_low = s.lower()
-    if any(ch in s for ch in "äöüßÄÖÜ") or re.search(r"\b(welche|unterlagen|brauche|für|zahlung|meldungen|infos|zu)\b", s_low):
-        return "de"
-    return "en"
+# logging flags: log locally, disable on Hugging Face Spaces
+IS_SPACE = bool(os.getenv("SPACE_ID") or os.getenv("HF_SPACE"))
+LOG_QUERIES = not IS_SPACE
 
 # ----------------- Data loading -----------------
 def load_docs():
@@ -174,7 +159,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
 
     lines = []
     for j, d in enumerate(top):
-        ts = datetime.fromtimestamp(os.path.getmtime(d['path'])).strftime('%Y-%m-%d')
+        ts = _dt.datetime.fromtimestamp(os.path.getmtime(d['path']), tz=_dt.timezone.utc).strftime('%Y-%m-%d')
         snippet = _short(highlight(d['text']))
         lines.append(f"[{j+1}] {snippet}  — `{os.path.basename(d['path'])}` • {d['lang']} • updated {ts}")
 
@@ -212,7 +197,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         answer_text = _strip_meta(fallback)
     sources = "### Sources\n" + header + "\n\n" + "\n\n".join(lines)
     log_query({
-        "ts": datetime.now().isoformat(timespec="seconds"),
+        "ts": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
         "query": query,
         "mode": mode,
         "k": k,
@@ -225,6 +210,25 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         "answer_len": len(answer_text),
         "corpus_size": len(docs),
     })
+     # log locally only (disabled on Hugging Face)
+    if LOG_QUERIES:
+        os.makedirs("logs", exist_ok=True)
+        try:
+            import csv as _csv
+            with open("logs/queries.csv", "a", newline="", encoding="utf-8") as f:
+                w = _csv.writer(f)
+                w.writerow([
+                _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+                    mode, int(k), q_lang,
+                    include or "",  # may be None
+                    exclude or "",
+                    *(d["path"] for d in top),
+                    *(d["lang"] for d in top),
+                ])
+        except Exception:
+            pass
+    stamp = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    sources = f"Time: {stamp} • Mode: {mode} • k={k} • lang={q_lang}\n\n" + sources 
     return answer_text, sources
 
 # ----------------- In-app Eval (lazy import to avoid circular) -----------------
@@ -316,6 +320,9 @@ CSS = """
 
 with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
     gr.Markdown("### Multilingual FAQ (EN/DE/AR) — language-aware retrieval")
+    gr.Markdown("**Privacy:** This demo does not store your queries. · "
+            "[GitHub](https://github.com/moe-eid-ml/p1-faq-rag) · "
+            "[Hugging Face Space](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)")
     with gr.Row():
         q = gr.Textbox(label="Your question", lines=4, scale=3, placeholder="Ask in English, Deutsch, or العربية")
         k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
