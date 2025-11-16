@@ -111,3 +111,10 @@ make test
 # quick eval (defaults K=3, Include=wohngeld)
 make eval
 make eval K=5 INCLUDE=wohngeld
+
+## Features
+- Multilingual (DE/EN/AR) questions
+- Three retrieval modes: TF-IDF, Semantic (MiniLM), Hybrid (RRF)
+- Language-aware source preference + Include/Exclude filters
+- In-app evaluation (P@K/R@K) + CLI eval
+- One-command deploy to Hugging Face (`make space-push`)
