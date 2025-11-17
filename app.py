@@ -51,8 +51,36 @@ for i, d in enumerate(docs): d["id"] = i
 DOC_INDEX = {(d["path"], d["text"]): i for i, d in enumerate(docs)}
 
 # ----------------- Retrievers -----------------
+# --- Semantic embedder (with on-disk cache) ---
+BUILD_DIR = "build"
+EMB_NPY = os.path.join(BUILD_DIR, "doc_embeddings.npy")
+EMB_META = os.path.join(BUILD_DIR, "doc_embeddings.meta")
+
+def _emb_cache_key(model_name, _docs):
+    mts = [os.path.getmtime(d["path"]) for d in _docs]
+    return f"{model_name}|{len(_docs)}|{int(sum(mts))}"
+
+os.makedirs(BUILD_DIR, exist_ok=True)
 embedder = SentenceTransformer(MODEL_NAME)
-doc_embeddings = embedder.encode([d["text"] for d in docs], convert_to_numpy=True)
+texts = [d["text"] for d in docs]
+_key = _emb_cache_key(MODEL_NAME, docs)
+
+try:
+    if os.path.exists(EMB_NPY) and os.path.exists(EMB_META):
+        with open(EMB_META, "r", encoding="utf-8") as f:
+            if f.read().strip() == _key:
+                doc_embeddings = np.load(EMB_NPY)
+            else:
+                raise FileNotFoundError
+    else:
+        raise FileNotFoundError
+except Exception:
+    doc_embeddings = embedder.encode(texts, convert_to_numpy=True)
+    np.save(EMB_NPY, doc_embeddings)
+    with open(EMB_META, "w", encoding="utf-8") as f:
+        f.write(_key)
+
+# L2-normalize once
 doc_embeddings = doc_embeddings / (np.linalg.norm(doc_embeddings, axis=-1, keepdims=True) + 1e-12)
 
 def cos_scores_np(q_vec: np.ndarray, D: np.ndarray) -> np.ndarray:
