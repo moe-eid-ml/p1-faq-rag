@@ -28,3 +28,8 @@ space-push:
 ask:
 	@if [ -z "$(Q)" ]; then echo 'Usage: make ask Q="Ihre Frage hier" [K=3 INCLUDE=wohngeld MODE=TF-IDF]'; exit 1; fi
 	python ask.py -m $${MODE:-TF-IDF} -k $${K:-3} -i $${INCLUDE:-wohngeld} "$${Q}"
+
+
+.PHONY: eval-hybrid
+eval-hybrid:
+	PYTHONPATH=. python eval_hybrid.py
