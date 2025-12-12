@@ -12,3 +12,6 @@ Erforderliche Unterlagen (typisch):
 Aliasfragen (TF-IDF-Boost):
 - Welche Unterlagen brauche ich für den Wohngeldantrag?
 - Welche Unterlagen brauche ich für Wohngeld?
+
+Stichwörter
+unterlagen, personalausweis, reisepass, mietvertrag, mietbescheinigung, einkommensnachweise, lohnabrechnung, rentenbescheid, kontoauszug, kontoauszüge, nebenkosten, heizkosten, immatrikulationsbescheinigung, bafög, einkommen, miete, haushaltsgröße, änderungen
