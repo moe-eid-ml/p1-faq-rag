@@ -1,56 +1,64 @@
 # Wohngeld FAQ RAG (DE/EN/AR)
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%A4%97-Live%20Demo-blue)](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)
+[![CI](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml)
 
 ![App screenshot](assets/ui.png)
+
 Compact RAG app for German **Wohngeld** questions. Dual retrievers (TF-IDF, Semantic) + Hybrid rerank. Gradio UI with in-app P@K/R@K evaluation. Deployed on Hugging Face.
 
-# P1 — Multilingual FAQ RAG (EN/DE/AR)
+## Multilingual FAQ RAG (EN/DE/AR)
 
 Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters, and a metrics CLI.
 
 ## Features
+
 - TF-IDF ↔ Semantic switch (MiniLM)
 - Language auto-detect + override (de/en/ar)
 - Filename **Include** filter (e.g., `faq`)
 - Eval CLI: Precision@K / Recall@K
 - Gradio UI
 
-## Run
+## Quickstart
+
 ```bash
-source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install -r requirements.txt
 python app.py
+```
+
 ## Results (FAQ subset)
 
-- k=3, Include=faq  
-  - TF-IDF: **P@3 = 0.57**, **R@3 = 0.80**  
+- k=3, Include=faq
+  - TF-IDF: **P@3 = 0.57**, **R@3 = 0.80**
   - Semantic: **P@3 = 0.33**, **R@3 = 1.00**
-
-- k=1, Include=faq  
-  - TF-IDF: **P@1 = 0.80**, **R@1 = 0.80**  
+- k=1, Include=faq
+  - TF-IDF: **P@1 = 0.80**, **R@1 = 0.80**
   - Semantic: **P@1 = 1.00**, **R@1 = 1.00**
+
+```bash
 python cli.py eval --both -k 3 --include faq
+```
+
+> **CI note:** In GitHub Actions, embeddings may be unavailable, so `semantic` and `hybrid` can fall back to TF-IDF and `--both` may show identical metrics in CI. Locally, install the semantic deps to enable true Semantic/Hybrid behavior.
+
 ## Wohngeld MVP (Multilingual)
 
-**Corpus:** `docs/wohngeld` (DE/EN/AR). Other texts archived and excluded from index.  
-**Default mode:** Hybrid (RRF).  
-**UI tip:** set **Include** → `wohngeld`; use **Language (override)** for strict DE/EN/AR.
+- **Corpus:** `docs/wohngeld` (DE/EN/AR). Other texts archived and excluded from index.
+- **Default mode:** Hybrid (RRF).
+- **UI tip:** set **Include** → `wohngeld`; use **Language (override)** for strict DE/EN/AR.
 
 ### Eval — `data/wohngeld_eval.jsonl`
-**k=3 (Include=wohngeld)**  
-- TF-IDF: **P@3 = 0.40**, **R@3 = 1.00**  
-- Semantic: **P@3 = 0.40**, **R@3 = 1.00**  
+
+**k=3 (Include=wohngeld)**
+- TF-IDF: **P@3 = 0.40**, **R@3 = 1.00**
+- Semantic: **P@3 = 0.40**, **R@3 = 1.00**
 - Hybrid: **P@3 = 0.40**, **R@3 = 1.00**
 
-**k=1 (Include=wohngeld)**  
+**k=1 (Include=wohngeld)**
 - Hybrid: **P@1 = 0.80**, **R@1 = 0.70**
 
-### Run
-```bash
-source .venv/bin/activate
-python app.py
-
-## Tooling
+## Tooling (FAQ corpus / Arabic seed)
 
 We use a small Typer CLI to keep the FAQ corpus clean and builds reproducible.
 
@@ -69,6 +77,7 @@ We use a small Typer CLI to keep the FAQ corpus clean and builds reproducible.
 - `.gitignore` excludes `.venv/`, `build/`, `__pycache__/`, `.pytest_cache/`.
 
 ## 📊 Current Metrics (2025-11-14)
+
 Scope: **Include=wohngeld** • Eval file: `data/wohngeld_eval.jsonl`
 
 - **P@1 (Hybrid, k=1):** 0.80
@@ -82,27 +91,6 @@ Notes:
 - UI: TF-IDF default, Hybrid/Semantic available. Markdown sources with keyword highlights.
 - Tools: in-app **Evaluate (P@K/R@K)**, **Reset filters**, CSV query logging.
 
-# P1 — Wohngeld FAQ RAG (EN/DE/AR)
-
-Small, RAG demo for German Wohngeld questions. Dual retrievers (TF-IDF + Semantic), Hybrid mode, language-aware ranking, in-app evaluation, and CSV logging.
-
-## Quickstart
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-python -m pip install -r requirements.txt
-python app.py
-
-## 📊 Eval (2025-11-14, 10 DE queries, Include=wohngeld, k=3)
-- **TF-IDF:** P@3 = **0.80**, R@3 ≈ 0.41
-- **Hybrid:** P@3 ≈ **0.67**, R@3 ≈ 0.35
-- **Semantic:** P@3 ≈ **0.60**, R@3 ≈ 0.33
-
-Notes: corpus focused on Wohngeld (DE/EN/AR) + one official DE PDF (sentence-aware paragraphs, ~200 chars on average (median 177; p90 355; max 531)) + targeted DE snippets (Unterlagen, Voraussetzungen, Bearbeitungszeit/Auszahlung, Antragstellung/Zuständigkeit).
-
-[![Live Demo — Hugging Face](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue)](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)
-
-[![CI](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml)
-
 ## Development
 
 ```bash
@@ -115,15 +103,10 @@ make test
 # quick eval (defaults K=3, Include=wohngeld)
 make eval
 make eval K=5 INCLUDE=wohngeld
-
-## Features
-- Multilingual (DE/EN/AR) questions
-- Three retrieval modes: TF-IDF, Semantic (MiniLM), Hybrid (RRF)
-- Language-aware source preference + Include/Exclude filters
-- In-app evaluation (P@K/R@K) + CLI eval
-- One-command deploy to Hugging Face (`make space-push`)
+```
 
 ## CLI (headless)
+
 Query the app from the terminal without starting the UI.
 
 ```bash
@@ -133,5 +116,4 @@ python ask.py -m TF-IDF -k 3 -i wohngeld "Welche Unterlagen brauche ich für den
 # with Make (defaults: MODE=TF-IDF, K=3, INCLUDE=wohngeld)
 make ask Q="Welche Unterlagen brauche ich für den Wohngeldantrag?"
 make ask Q="Bearbeitungszeit Wohngeld?" MODE=Hybrid K=5
-
 ```
