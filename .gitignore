@@ -29,3 +29,6 @@ local_files.txt
 public_files.txt
 __pycache__/
 *.pyc
+
+# macOS
+.DS_Store
