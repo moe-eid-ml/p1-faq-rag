@@ -1,5 +1,4 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
-import numpy as np
 
 class TfidfRetriever:
     def __init__(self, passages):

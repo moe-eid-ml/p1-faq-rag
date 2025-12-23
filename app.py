@@ -1,4 +1,7 @@
-import os, glob, re, json
+import os
+import glob
+import re
+import json
 import numpy as np
 import csv
 
@@ -9,8 +12,6 @@ except Exception:
     gr = None
 
 from tfidf import TfidfRetriever
-# if you don't have eval.py, delete the next line
-from eval import evaluate_run
 import datetime as _dt
 
 from app_pkg.lang import detect_lang, AR_RE
@@ -304,8 +305,8 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     return answer_text, sources
 
 # ----------------- In-app Eval (lazy import to avoid circular) -----------------
-from eval import evaluate_run
 def eval_ui(k, include, lang):
+    from eval import evaluate_run
     # self-contained eval (no cli import)
     k = int(k)
     includes = [s.strip().lower() for s in (include or "").split(",") if s.strip()] or None

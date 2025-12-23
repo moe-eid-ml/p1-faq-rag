@@ -1,21 +1,24 @@
-import sys, os, re
+import sys
+import os
+import re
 from pypdf import PdfReader
+
 
 def to_paragraphs(text: str, min_len=60, max_len=400):
     # normalize whitespace
-    text = re.sub(r'\r', '\n', text)
-    text = re.sub(r'[ \t]+', ' ', text)
-    blocks = re.split(r'\n\s*\n', text)  # blank-line blocks
+    text = re.sub(r"\r", "\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    blocks = re.split(r"\n\s*\n", text)  # blank-line blocks
 
     def split_block(b):
         # sentence-ish split (handles ?, !, . and Arabic ؟)
-        sents = re.split(r'(?<=[\.\!\?؟])\s+', b.strip())
+        sents = re.split(r"(?<=[\.\!\?؟])\s+", b.strip())
         out, cur = [], ""
         for s in sents:
             if not s:
                 continue
             # keep bullets intact
-            if re.match(r'^[\-\u2022•]', s):
+            if re.match(r"^[\-\u2022•]", s):
                 if cur:
                     out.append(cur.strip())
                     cur = ""
@@ -35,11 +38,12 @@ def to_paragraphs(text: str, min_len=60, max_len=400):
     paras = []
     for b in blocks:
         for p in split_block(b):
-            p = re.sub(r'\s+', ' ', p).strip()
+            p = re.sub(r"\s+", " ", p).strip()
             if len(p) >= min_len:
                 paras.append(p)
 
-    return '\n\n'.join(paras).strip()
+    return "\n\n".join(paras).strip()
+
 
 def main():
     if len(sys.argv) < 3:
@@ -47,8 +51,9 @@ def main():
         sys.exit(1)
     pdf_path, out_txt = sys.argv[1], sys.argv[2]
     lang = (sys.argv[3] if len(sys.argv) > 3 else "de").lower()
-    if lang not in {"de","en","ar"}:
-        print("lang must be de|en|ar"); sys.exit(1)
+    if lang not in {"de", "en", "ar"}:
+        print("lang must be de|en|ar")
+        sys.exit(1)
 
     reader = PdfReader(pdf_path)
     raw = "\n\n".join((page.extract_text() or "") for page in reader.pages)
@@ -62,6 +67,7 @@ def main():
     with open(out_txt, "w", encoding="utf-8") as f:
         f.write(text + "\n")
     print(f"Wrote: {out_txt}")
+
 
 if __name__ == "__main__":
     main()

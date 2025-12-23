@@ -1,4 +1,5 @@
-import argparse, json
+import argparse
+import json
 from os.path import basename
 import numpy as np
 

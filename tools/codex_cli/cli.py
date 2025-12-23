@@ -1,4 +1,8 @@
-import glob, pathlib, re, time, json
+import json
+import glob
+import pathlib
+import re
+import time
 import regex as re2
 import typer
 
@@ -8,16 +12,20 @@ META_KEYS = ("ID:", "CAT:", "TAGS:", "Q:", "A:")
 LATIN = re.compile(r"[A-Za-z]")
 ARABIC_BLOCK = re2.compile(r"\p{Arabic}", re2.UNICODE)
 
+
 def iter_txt(path=AR_PATH):
     for p in sorted(glob.glob(f"{path}/**/*.txt", recursive=True)):
         yield pathlib.Path(p)
 
-def parse_qa(text:str):
+
+def parse_qa(text: str):
     lines = [l.rstrip() for l in text.splitlines()]
     meta, body = {}, []
     for l in lines:
         if any(l.startswith(k) for k in META_KEYS[:-2]):  # ID/CAT/TAGS
-            k, v = l.split(":", 1); meta[k]=v.strip(); continue
+            k, v = l.split(":", 1)
+            meta[k] = v.strip()
+            continue
         body.append(l)
     q = next((l[2:].strip() for l in body if l.startswith("Q:")), "")
     a_lines = []
@@ -25,10 +33,13 @@ def parse_qa(text:str):
     for l in body:
         if l.startswith("A:"):
             seen_a = True
-            a_lines.append(l[2:].strip()); continue
-        if seen_a: a_lines.append(l)
+            a_lines.append(l[2:].strip())
+            continue
+        if seen_a:
+            a_lines.append(l)
     a = "\n".join(a_lines).strip()
     return meta, q, a
+
 
 @app.command()
 def validate(path: str = AR_PATH, banned: str = "banned_terms.txt"):
@@ -42,7 +53,7 @@ def validate(path: str = AR_PATH, banned: str = "banned_terms.txt"):
         pass
     for p in iter_txt(path):
         t = p.read_text(encoding="utf-8")
-        meta,q,a = parse_qa(t)
+        meta, q, a = parse_qa(t)
         content = f"{q}\n{a}"
         if LATIN.search(content):
             problems.append((p, "Contains Latin letters in Q/A"))
@@ -52,9 +63,11 @@ def validate(path: str = AR_PATH, banned: str = "banned_terms.txt"):
             if term and term in content:
                 problems.append((p, f"Banned term: {term}"))
     if problems:
-        for p, why in problems: print(f"FAIL {p}: {why}")
+        for p, why in problems:
+            print(f"FAIL {p}: {why}")
         raise typer.Exit(code=1)
     print("OK All files valid.")
+
 
 @app.command()
 def slugs(path: str = AR_PATH, fix: bool = False):
@@ -66,7 +79,9 @@ def slugs(path: str = AR_PATH, fix: bool = False):
             if fix:
                 slug = re.sub(r"[^a-z0-9\-]", "-", p.stem.lower())
                 new = p.with_name(f"{slug}__{time.strftime('%Y-%m-%d')}.txt")
-                p.rename(new); print(f"FIX → {new.name}")
+                p.rename(new)
+                print(f"FIX → {new.name}")
+
 
 @app.command()
 def embed(path: str = AR_PATH, out: str = "build/index.json"):
@@ -74,11 +89,12 @@ def embed(path: str = AR_PATH, out: str = "build/index.json"):
     pathlib.Path("build").mkdir(exist_ok=True)
     items = []
     for p in iter_txt(path):
-        meta,q,a = parse_qa(p.read_text(encoding="utf-8"))
+        meta, q, a = parse_qa(p.read_text(encoding="utf-8"))
         items.append({"id": meta.get("ID") or p.stem, "q": q, "a": a, "path": str(p)})
     with open(out, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
     print(f"Built {out} ({len(items)} docs)")
+
 
 @app.command()
 def sync():
@@ -87,6 +103,7 @@ def sync():
     slugs()
     embed()
     print("Sync complete.")
+
 
 if __name__ == "__main__":
     app()
