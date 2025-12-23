@@ -15,11 +15,15 @@ jobs:
           python -m pip install -U pip
           pip install -e .
           pip install pytest
-      - name: Validate Arabic-only & slugs
+      - name: Optional Codex checks (skip if Codex CLI not installed)
         run: |
-          codex validate
-          codex slugs
-      - name: Build index
-        run: codex embed
+          if command -v codex >/dev/null 2>&1; then
+            echo "Codex CLI found — running validations"
+            codex validate
+            codex slugs
+            codex embed
+          else
+            echo "Codex CLI not found on runner — skipping codex validate/slugs/embed"
+          fi
       - name: Tests
-        run: pytest -q || echo "No tests found or all passed"
+        run: pytest -q
