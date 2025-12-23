@@ -1,12 +1,28 @@
-[tool.ruff]
-line-length = 140
+name: FAQ Pipeline CI
 
-[tool.ruff.lint]
-select = ["E", "F"]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
-[tool.ruff.lint.per-file-ignores]
-"app.py" = ["E701"]
-"app_pkg/lang.py" = ["E701"]
-"scripts/*.py" = ["E702"]
-"tests/*.py" = ["E741"]
-"tools/codex_cli/*.py" = ["E701", "E702", "E741"]
+jobs:
+  validate-build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install -U pip
+          pip install -e .
+          pip install ruff pytest
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Tests
+        run: pytest -q
