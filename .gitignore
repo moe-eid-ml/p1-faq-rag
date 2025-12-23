@@ -23,3 +23,9 @@ logs/
 # pytest cache, build artifacts
 .pytest_cache/
 build/
+
+# local diagnostics
+local_files.txt
+public_files.txt
+__pycache__/
+*.pyc

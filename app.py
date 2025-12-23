@@ -1,8 +1,13 @@
 import os, glob, re, json
-import gradio as gr
 import numpy as np
 import csv
-from sentence_transformers import SentenceTransformer
+
+# Gradio is optional: tests/CI import this module without needing the UI.
+try:
+    import gradio as gr
+except Exception:
+    gr = None
+
 from tfidf import TfidfRetriever
 # if you don't have eval.py, delete the next line
 from eval import evaluate_run
@@ -50,38 +55,60 @@ docs = load_docs()
 for i, d in enumerate(docs): d["id"] = i
 DOC_INDEX = {(d["path"], d["text"]): i for i, d in enumerate(docs)}
 
+#
 # ----------------- Retrievers -----------------
-# --- Semantic embedder (with on-disk cache) ---
+# --- Semantic embedder (lazy + optional, with on-disk cache) ---
 BUILD_DIR = "build"
 EMB_NPY = os.path.join(BUILD_DIR, "doc_embeddings.npy")
 EMB_META = os.path.join(BUILD_DIR, "doc_embeddings.meta")
+
+embedder = None
+doc_embeddings = None
+_semantic_ready = False
 
 def _emb_cache_key(model_name, _docs):
     mts = [os.path.getmtime(d["path"]) for d in _docs]
     return f"{model_name}|{len(_docs)}|{int(sum(mts))}"
 
-os.makedirs(BUILD_DIR, exist_ok=True)
-embedder = SentenceTransformer(MODEL_NAME)
-texts = [d["text"] for d in docs]
-_key = _emb_cache_key(MODEL_NAME, docs)
+def _init_embeddings():
+    """Init embeddings lazily.
 
-try:
-    if os.path.exists(EMB_NPY) and os.path.exists(EMB_META):
-        with open(EMB_META, "r", encoding="utf-8") as f:
-            if f.read().strip() == _key:
-                doc_embeddings = np.load(EMB_NPY)
-            else:
-                raise FileNotFoundError
-    else:
-        raise FileNotFoundError
-except Exception:
-    doc_embeddings = embedder.encode(texts, convert_to_numpy=True)
-    np.save(EMB_NPY, doc_embeddings)
-    with open(EMB_META, "w", encoding="utf-8") as f:
-        f.write(_key)
+    If `sentence_transformers` isn't installed, keep semantic disabled and allow
+    TF-IDF-only operation (tests + basic usage).
+    """
+    global embedder, doc_embeddings, _semantic_ready
+    if _semantic_ready:
+        return
 
-# L2-normalize once
-doc_embeddings = doc_embeddings / (np.linalg.norm(doc_embeddings, axis=-1, keepdims=True) + 1e-12)
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ModuleNotFoundError:
+        _semantic_ready = False
+        return
+
+    os.makedirs(BUILD_DIR, exist_ok=True)
+    embedder = SentenceTransformer(MODEL_NAME)
+    texts = [d["text"] for d in docs]
+    _key = _emb_cache_key(MODEL_NAME, docs)
+
+    try:
+        if os.path.exists(EMB_NPY) and os.path.exists(EMB_META):
+            with open(EMB_META, "r", encoding="utf-8") as f:
+                if f.read().strip() == _key:
+                    doc_embeddings = np.load(EMB_NPY)
+                else:
+                    raise FileNotFoundError
+        else:
+            raise FileNotFoundError
+    except Exception:
+        doc_embeddings = embedder.encode(texts, convert_to_numpy=True)
+        np.save(EMB_NPY, doc_embeddings)
+        with open(EMB_META, "w", encoding="utf-8") as f:
+            f.write(_key)
+
+    # L2-normalize once
+    doc_embeddings = doc_embeddings / (np.linalg.norm(doc_embeddings, axis=-1, keepdims=True) + 1e-12)
+    _semantic_ready = True
 
 def cos_scores_np(q_vec: np.ndarray, D: np.ndarray) -> np.ndarray:
     q = q_vec / (np.linalg.norm(q_vec) + 1e-12)
@@ -128,23 +155,40 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
 
     elif mode == "Hybrid":
         # 1) semantic query embedding (once)
-        q_emb = embedder.encode(query, convert_to_numpy=True)
-        sem_scores = cos_scores_np(q_emb, doc_embeddings)
+        _init_embeddings()
+        if not _semantic_ready:
+            mode = "TF-IDF"
+        if mode == "Hybrid":
+            q_emb = embedder.encode(query, convert_to_numpy=True)
+            sem_scores = cos_scores_np(q_emb, doc_embeddings)
 
-        # 2) lexical candidate pool (broad)
-        passages, scores = tfidf.search(query, k=max(200, k * 50))
-        order = np.argsort(scores)[::-1]
-        idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
-        tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+            # 2) lexical candidate pool (broad)
+            passages, scores = tfidf.search(query, k=max(200, k * 50))
+            order = np.argsort(scores)[::-1]
+            idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
 
-        # 3) rerank TF-IDF top-N by semantic similarity
-        CAND = 200
-        candidates = tf_order[:CAND]
-        order_idxs = sorted(candidates, key=lambda i: float(sem_scores[i]), reverse=True)
+            # 3) rerank TF-IDF top-N by semantic similarity
+            CAND = 200
+            candidates = tf_order[:CAND]
+            order_idxs = sorted(candidates, key=lambda i: float(sem_scores[i]), reverse=True)
+        else:
+            passages, scores = tfidf.search(query, k=max(k * 3, 12))
+            order = np.argsort(scores)[::-1]
+            idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
     else:  # Semantic
-        q_emb = embedder.encode(query, convert_to_numpy=True)
-        scores = cos_scores_np(q_emb, doc_embeddings)
-        order_idxs = scores.argsort()[::-1].tolist()
+        _init_embeddings()
+        if not _semantic_ready:
+            # fallback to TF-IDF if semantic deps are missing
+            passages, scores = tfidf.search(query, k=max(k * 3, 12))
+            order = np.argsort(scores)[::-1]
+            idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+        else:
+            q_emb = embedder.encode(query, convert_to_numpy=True)
+            scores = cos_scores_np(q_emb, doc_embeddings)
+            order_idxs = scores.argsort()[::-1].tolist()
     # filename filter (run AFTER we have order_idxs)
     if includes or excludes:
         order_idxs = [i for i in order_idxs if file_ok(docs[i]["path"], includes, excludes)]
@@ -299,6 +343,15 @@ def eval_ui(k, include, lang):
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
         elif m == "hybrid":
+            _init_embeddings()
+            if not _semantic_ready:
+                passages, scores = tfidf.search(query, k=max(k * 3, 12))
+                order = np.argsort(scores)[::-1]
+                idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+                ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+                ranked = [i for i in ranked if file_ok(docs[i]["path"], includes, None)]
+                q_lang = detect_lang(query)
+                return _prefer_lang(ranked, q_lang, k)
             q_emb = embedder.encode(query, convert_to_numpy=True)
             sem_scores = cos_scores_np(q_emb, doc_embeddings)
             sem_order = sem_scores.argsort()[::-1].tolist()
@@ -314,6 +367,15 @@ def eval_ui(k, include, lang):
                 rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
             ranked = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
         else:  # semantic
+            _init_embeddings()
+            if not _semantic_ready:
+                passages, scores = tfidf.search(query, k=max(k * 3, 12))
+                order = np.argsort(scores)[::-1]
+                idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+                ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+                ranked = [i for i in ranked if file_ok(docs[i]["path"], includes, None)]
+                q_lang = detect_lang(query)
+                return _prefer_lang(ranked, q_lang, k)
             q_emb = embedder.encode(query, convert_to_numpy=True)
             scores = cos_scores_np(q_emb, doc_embeddings)
             ranked = scores.argsort()[::-1].tolist()
@@ -341,63 +403,84 @@ def _fill_q(s: str) -> str:
     return s or ""
 
 # ----------------- UI -----------------
+
+# Gradio UI is constructed only on demand, not at import-time.
 CSS = """
 #answer_box textarea {min-height: 300px !important; height: 300px !important;}
 #source_box {min-height: 180px !important;}
 """
 
-with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
-    gr.Markdown("### Multilingual FAQ (EN/DE/AR) — language-aware retrieval")
-    gr.Markdown("**Privacy:** This demo does not store your queries. · "
-            "[GitHub](https://github.com/moe-eid-ml/p1-faq-rag) · "
-            "[Hugging Face Space](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)")
-    with gr.Row():
-        q = gr.Textbox(label="Your question", lines=4, scale=3, placeholder="Ask in English, Deutsch, or العربية")
-        k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
-        mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="TF-IDF", label="Retrieval mode")
-        include = gr.Textbox(
-            label="Include filenames (comma-separated, optional)",
-            placeholder="e.g. wohngeld, faq",
-            value="wohngeld",
-            scale=1
-        )
-        exclude = gr.Textbox(
-            label="Exclude filenames (comma-separated, optional)",
-            placeholder="e.g. pdf, bescheid, scan",
-            value="",
-            scale=1
-        )
-        lang = gr.Dropdown(
-            label="Language (override)",
-            choices=["auto", "de", "en", "ar"],
-            value="auto",
-            scale=1
-        )
-    with gr.Row():
-        sample = gr.Dropdown(
-            label="Sample question",
-            choices=[
-                "Welche Unterlagen brauche ich für den Wohngeldantrag?",
-                "Wo stelle ich den Wohngeldantrag in meiner Stadt?",
-                "Wie lange dauert die Bearbeitung vom Wohngeld?",
-                "Wie wird die Höhe des Wohngelds berechnet?",
-                "Wann sollte ich den Weiterleistungsantrag stellen?"
-            ],
-            value=None,
-            scale=3
-        )
-    ans = gr.Textbox(label="Answer", lines=16, interactive=True, show_copy_button=True, elem_id="answer_box")
-    src = gr.Markdown(label="Top sources", elem_id="source_box")
+def build_demo():
+    """Build and return the Gradio UI.
 
-    go = gr.Button("Search")
-    go.click(answer, [q, k, mode, include, lang, exclude], [ans, src])
-    sample.change(_fill_q, [sample], [q])
-    reset = gr.Button("Reset filters")
-    reset.click(_reset_defaults, [], [k, mode, include, exclude, lang])
-    with gr.Row():
-        ebtn = gr.Button("Evaluate (P@K / R@K)")
-        emd = gr.Markdown()
-    ebtn.click(eval_ui, [k, include, lang], [emd])
+    Kept out of module import-time so tests can import `app` even when Gradio
+    isn't installed.
+    """
+    if gr is None:
+        raise RuntimeError("Gradio is not installed. Install it to run the UI.")
+
+    with gr.Blocks(css=CSS, title="P1 — Mini FAQ (EN/DE/AR)") as demo:
+        gr.Markdown("### Multilingual FAQ (EN/DE/AR) — language-aware retrieval")
+        gr.Markdown(
+            "**Privacy:** This demo does not store your queries. · "
+            "[GitHub](https://github.com/moe-eid-ml/p1-faq-rag) · "
+            "[Hugging Face Space](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)"
+        )
+        with gr.Row():
+            q = gr.Textbox(label="Your question", lines=4, scale=3, placeholder="Ask in English, Deutsch, or العربية")
+            k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
+            mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="TF-IDF", label="Retrieval mode")
+            include = gr.Textbox(
+                label="Include filenames (comma-separated, optional)",
+                placeholder="e.g. wohngeld, faq",
+                value="wohngeld",
+                scale=1,
+            )
+            exclude = gr.Textbox(
+                label="Exclude filenames (comma-separated, optional)",
+                placeholder="e.g. pdf, bescheid, scan",
+                value="",
+                scale=1,
+            )
+            lang = gr.Dropdown(
+                label="Language (override)",
+                choices=["auto", "de", "en", "ar"],
+                value="auto",
+                scale=1,
+            )
+        with gr.Row():
+            sample = gr.Dropdown(
+                label="Sample question",
+                choices=[
+                    "Welche Unterlagen brauche ich für den Wohngeldantrag?",
+                    "Wo stelle ich den Wohngeldantrag in meiner Stadt?",
+                    "Wie lange dauert die Bearbeitung vom Wohngeld?",
+                    "Wie wird die Höhe des Wohngelds berechnet?",
+                    "Wann sollte ich den Weiterleistungsantrag stellen?",
+                ],
+                value=None,
+                scale=3,
+            )
+        ans = gr.Textbox(label="Answer", lines=16, interactive=True, show_copy_button=True, elem_id="answer_box")
+        src = gr.Markdown(label="Top sources", elem_id="source_box")
+
+        go = gr.Button("Search")
+        go.click(answer, [q, k, mode, include, lang, exclude], [ans, src])
+        sample.change(_fill_q, [sample], [q])
+        reset = gr.Button("Reset filters")
+        reset.click(_reset_defaults, [], [k, mode, include, exclude, lang])
+        with gr.Row():
+            ebtn = gr.Button("Evaluate (P@K / R@K)")
+            emd = gr.Markdown()
+            ebtn.click(eval_ui, [k, include, lang], [emd])
+
+    return demo
+
+
+# Expose a module-level name for compatibility. It's only built on demand.
+demo = None
+
 
 if __name__ == "__main__":
+    demo = build_demo()
     demo.launch()
