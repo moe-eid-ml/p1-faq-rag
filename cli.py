@@ -6,6 +6,9 @@ import numpy as np
 import app
 from eval import evaluate_run
 
+def semantic_available() -> bool:
+    return getattr(app, "embedder", None) is not None and getattr(app, "doc_embeddings", None) is not None
+
 def load_eval(path="data/wohngeld_eval.jsonl"):
     items = []
     with open(path, "r", encoding="utf-8") as f:
@@ -46,28 +49,43 @@ def predict_ids(query, mode, k, includes=None, excludes=None):
         ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
 
     elif m == "hybrid":
-        # semantic ranking
-        q_emb = app.embedder.encode(query, convert_to_numpy=True)
-        sem_scores = app.cos_scores_np(q_emb, app.doc_embeddings)
-        sem_order = sem_scores.argsort()[::-1].tolist()
-        # tf-idf (wider pool)
-        passages, scores = app.tfidf.search(query, k=max(k * 10, 200))
-        order = np.argsort(scores)[::-1]
-        idx_map = [app.DOC_INDEX.get((p["path"], p["text"])) for p in passages]
-        tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
-        # reciprocal rank fusion
-        k0 = 60.0
-        rrf = {}
-        for r, i in enumerate(sem_order):
-            rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
-        for r, i in enumerate(tf_order):
-            rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
-        ranked = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
+        if not semantic_available():
+            # No embeddings available (e.g., CI without sentence-transformers). Fall back to TF-IDF.
+            m = "tfidf"
+            passages, scores = app.tfidf.search(query, k=max(k * 10, 200))
+            order = np.argsort(scores)[::-1]
+            idx_map = [app.DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+        else:
+            # semantic ranking
+            q_emb = app.embedder.encode(query, convert_to_numpy=True)
+            sem_scores = app.cos_scores_np(q_emb, app.doc_embeddings)
+            sem_order = sem_scores.argsort()[::-1].tolist()
+            # tf-idf (wider pool)
+            passages, scores = app.tfidf.search(query, k=max(k * 10, 200))
+            order = np.argsort(scores)[::-1]
+            idx_map = [app.DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+            # reciprocal rank fusion
+            k0 = 60.0
+            rrf = {}
+            for r, i in enumerate(sem_order):
+                rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+            for r, i in enumerate(tf_order):
+                rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+            ranked = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
 
     else:  # semantic
-        q_emb = app.embedder.encode(query, convert_to_numpy=True)
-        scores = app.cos_scores_np(q_emb, app.doc_embeddings)
-        ranked = scores.argsort()[::-1].tolist()
+        if not semantic_available():
+            # Fall back to TF-IDF when embeddings are unavailable.
+            passages, scores = app.tfidf.search(query, k=max(k * 3, 12))
+            order = np.argsort(scores)[::-1]
+            idx_map = [app.DOC_INDEX.get((p["path"], p["text"])) for p in passages]
+            ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+        else:
+            q_emb = app.embedder.encode(query, convert_to_numpy=True)
+            scores = app.cos_scores_np(q_emb, app.doc_embeddings)
+            ranked = scores.argsort()[::-1].tolist()
 
     # filename filter
     ranked = [i for i in ranked if file_ok(app.docs[i]["path"], includes, excludes)]
