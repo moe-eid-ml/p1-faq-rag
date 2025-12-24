@@ -22,9 +22,34 @@ Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters,
 
 ## Reliability (proof-driven)
 
+
 - **Abstain on low confidence:** if retrieval is weak/ambiguous, the app returns “Insufficient evidence…” instead of guessing (and still shows top sources + reason).
-- **Lightweight source pointer:** non-abstained answers end with `Source: [n] (`filename`)` to make provenance obvious.
+- **Lightweight source pointer:** non-abstained answers end with ``Source: [n] (`filename`)`` to make provenance obvious.
 - **CI regressions:** a fast **Smoke (fast)** job runs critical tests (abstain + source pointer) on every push/PR.
+
+## Demo (60 seconds)
+
+Run locally:
+
+```bash
+make run
+```
+
+Then try these in the UI:
+
+1) **Normal question (answers + shows Source pointer)**
+- Query: `Welche Unterlagen brauche ich für den Wohngeldantrag?`
+- Expect: an answer ending with ``Source: [n] (`filename`)``
+
+2) **Junk query (abstains instead of guessing)**
+- Query: `asdf qwerty`
+- Expect: “Insufficient evidence…” + Sources still shown + `Abstain: yes (...)`
+
+3) **Filters + language control**
+- Set **Include** → `wohngeld`
+- Set **Language (override)** → `de`
+- Query: `Wie lange dauert die Bearbeitung von Wohngeld?`
+- Expect: German answer + clear sources
 
 ## Quickstart
 
