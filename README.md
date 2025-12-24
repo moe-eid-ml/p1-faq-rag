@@ -107,6 +107,9 @@ make run
 # tests
 make test
 
+# fast regressions (abstain + source pointer)
+make smoke
+
 # quick eval (defaults K=3, Include=wohngeld)
 make eval
 make eval K=5 INCLUDE=wohngeld
