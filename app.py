@@ -336,24 +336,31 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
             return True
         return False
 
-    # candidates = non-alias texts from top-K
-    cand_texts = [d["text"] for d in top if "aliasfragen" not in d["text"].lower()]
+    # candidates = non-alias texts from top-K (keep source index for lightweight citations)
+    cand_pairs = [(d["text"], j) for j, d in enumerate(top) if "aliasfragen" not in d["text"].lower()]
 
-    # prefer texts that don't start with [Meta]; then the rest
-    primary = [t for t in cand_texts if not t.lstrip().lower().startswith("[meta]")]
-    ordered = primary + [t for t in cand_texts if t not in primary]
+    # prefer texts that don't start with [Meta]; then the rest (keep source index)
+    primary = [(t, j) for (t, j) in cand_pairs if not t.lstrip().lower().startswith("[meta]")]
+    ordered = primary + [(t, j) for (t, j) in cand_pairs if (t, j) not in primary]
 
     answer_text = ""
-    for t in ordered:
+    answer_src = None  # 0-based index into `top`
+    for t, j in ordered:
         stripped = _strip_meta(t)
         if _is_keyword_block(stripped):
             continue
         if len(stripped) >= 40:  # avoid too-short after stripping
             answer_text = stripped
+            answer_src = j
             break
     if not answer_text:
         # ultimate fallback: first available text (strip meta anyway)
-        fallback = cand_texts[0] if cand_texts else top[0]["text"]
+        if cand_pairs:
+            fallback, j = cand_pairs[0]
+            answer_src = j
+        else:
+            fallback, j = top[0]["text"], 0
+            answer_src = j
         answer_text = _strip_meta(fallback)
     # If retrieval confidence is low, abstain instead of answering from snippets.
     if abstained:
@@ -361,6 +368,10 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
             "Insufficient evidence in the retrieved documents to answer confidently.\n\n"
             "Try rephrasing the question, increasing Top-K, or adjusting include/exclude filters."
         )
+    else:
+        # Lightweight citation coverage: point to the top source we used.
+        if answer_src is not None:
+            answer_text = f"{answer_text}\n\nSource: [{answer_src + 1}]"
     sources = "### Sources\n" + header + "\n\n" + "\n\n".join(lines)
     log_query({
         "ts": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
