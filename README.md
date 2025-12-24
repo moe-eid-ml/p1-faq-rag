@@ -11,6 +11,7 @@ Compact RAG app for German **Wohngeld** questions. Dual retrievers (TF-IDF, Sema
 
 Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters, and a metrics CLI.
 
+
 ## Features
 
 - TF-IDF ↔ Semantic switch (MiniLM)
@@ -18,6 +19,12 @@ Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters,
 - Filename **Include** filter (e.g., `faq`)
 - Eval CLI: Precision@K / Recall@K
 - Gradio UI
+
+## Reliability (proof-driven)
+
+- **Abstain on low confidence:** if retrieval is weak/ambiguous, the app returns “Insufficient evidence…” instead of guessing (and still shows top sources + reason).
+- **Lightweight source pointer:** non-abstained answers end with `Source: [n] (`filename`)` to make provenance obvious.
+- **CI regressions:** a fast **Smoke (fast)** job runs critical tests (abstain + source pointer) on every push/PR.
 
 ## Quickstart
 
