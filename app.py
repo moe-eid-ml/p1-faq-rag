@@ -371,7 +371,9 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     else:
         # Lightweight citation coverage: point to the top source we used.
         if answer_src is not None:
-            answer_text = f"{answer_text}\n\nSource: [{answer_src + 1}]"
+            src_file = os.path.basename(top[answer_src]["path"]) if top and answer_src < len(top) else ""
+            suffix = f" (`{src_file}`)" if src_file else ""
+            answer_text = f"{answer_text}\n\nSource: [{answer_src + 1}]{suffix}"
     sources = "### Sources\n" + header + "\n\n" + "\n\n".join(lines)
     log_query({
         "ts": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
