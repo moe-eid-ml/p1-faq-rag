@@ -148,11 +148,23 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     includes = [s.strip().lower() for s in (include or "").split(",") if s.strip()] or None
     excludes = [s.strip().lower() for s in (exclude or "").split(",") if s.strip()] or None
 
+    # retrieval confidence helpers
+    tfidf_score_by_id = {}
+    used_semantic_scores = False
+
     if mode == "TF-IDF":
         passages, scores = tfidf.search(query, k=max(k * 3, 12))
         order = np.argsort(scores)[::-1]
         idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
         order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+        for p, s in zip(passages, scores):
+            idx = DOC_INDEX.get((p["path"], p["text"]))
+            if idx is None:
+                continue
+            prev = tfidf_score_by_id.get(idx)
+            s = float(s)
+            if prev is None or s > prev:
+                tfidf_score_by_id[idx] = s
 
     elif mode == "Hybrid":
         # 1) semantic query embedding (once)
@@ -162,6 +174,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         if mode == "Hybrid":
             q_emb = embedder.encode(query, convert_to_numpy=True)
             sem_scores = cos_scores_np(q_emb, doc_embeddings)
+            used_semantic_scores = True
 
             # 2) lexical candidate pool (broad)
             passages, scores = tfidf.search(query, k=max(200, k * 50))
@@ -178,6 +191,14 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
             order = np.argsort(scores)[::-1]
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+            for p, s in zip(passages, scores):
+                idx = DOC_INDEX.get((p["path"], p["text"]))
+                if idx is None:
+                    continue
+                prev = tfidf_score_by_id.get(idx)
+                s = float(s)
+                if prev is None or s > prev:
+                    tfidf_score_by_id[idx] = s
     else:  # Semantic
         _init_embeddings()
         if not _semantic_ready:
@@ -186,9 +207,18 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
             order = np.argsort(scores)[::-1]
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
+            for p, s in zip(passages, scores):
+                idx = DOC_INDEX.get((p["path"], p["text"]))
+                if idx is None:
+                    continue
+                prev = tfidf_score_by_id.get(idx)
+                s = float(s)
+                if prev is None or s > prev:
+                    tfidf_score_by_id[idx] = s
         else:
             q_emb = embedder.encode(query, convert_to_numpy=True)
             scores = cos_scores_np(q_emb, doc_embeddings)
+            used_semantic_scores = True
             order_idxs = scores.argsort()[::-1].tolist()
     # filename filter (run AFTER we have order_idxs)
     if includes or excludes:
@@ -208,6 +238,61 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     if not top:
         return "No results.", ""
 
+    # -------- Abstain gate (MVP) --------
+    def _score_for(idx: int):
+        if used_semantic_scores:
+            try:
+                if mode == "Hybrid":
+                    return float(sem_scores[idx])
+                return float(scores[idx])
+            except Exception:
+                return None
+        return tfidf_score_by_id.get(idx)
+
+    s1 = _score_for(chosen[0]) if chosen else None
+    s2 = _score_for(chosen[1]) if len(chosen) > 1 else None
+
+    # Thresholds are intentionally conservative; we’ll tune later with a few examples.
+    if used_semantic_scores:
+        MIN_TOP, MIN_GAP = 0.25, 0.03
+    else:
+        MIN_TOP, MIN_GAP = 0.05, 0.01
+
+    abstained = False
+    abstain_reason = ""
+    if s1 is None:
+        abstained = True
+        abstain_reason = "no usable retrieval scores"
+    elif s1 < MIN_TOP:
+        abstained = True
+        abstain_reason = "weak retrieval match"
+    elif s2 is not None and (s1 - s2) < MIN_GAP:
+        abstained = True
+        abstain_reason = "ambiguous retrieval (top results too close)"
+
+    # Extra safety: if none of the meaningful query tokens appear in the retrieved sources,
+    # abstain (helps when TF-IDF returns a plausible-looking but unrelated snippet).
+    _q_tokens = re.findall(r"\w+", query.lower(), flags=re.UNICODE)
+    _stop = {
+        # EN
+        "the","and","or","to","of","in","on","for","with","a","an","is","are","was","were","be",
+        "what","which","who","whom","where","when","why","how",
+        # DE
+        "der","die","das","und","oder","zu","von","im","in","am","an","auf","für","mit","ein","eine","einer","eines",
+        "was","welche","welcher","welches","wer","wo","wann","warum","wie",
+        # AR (very light)
+        "ما","ماذا","من","أين","متى","لماذا","كيف","في","على","و","او","أو"
+    }
+    _kw2 = {t for t in _q_tokens if len(t) >= 3 and t not in _stop}
+    _hay = (
+        " ".join(d["text"] for d in top)
+        + " "
+        + " ".join(os.path.basename(d["path"]) for d in top)
+    ).lower()
+    if _kw2 and not any(t in _hay for t in _kw2):
+        abstained = True
+        abstain_reason = "no lexical overlap with retrieved sources"
+
     # -------- Sources (Markdown with highlights) --------
     def _short(s, n=240):
         s = " ".join(s.split())
@@ -219,6 +304,8 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         f"• **Exclude:** {exclude or '—'} • **Lang:** {q_lang}"
         f"{' (forced)' if lang in ('de','en','ar') else ''}"
     )
+    if abstained:
+        header += f" • **Abstain:** yes ({abstain_reason})"
 
     # simple keyword highlights from the query
     q_tokens = re.findall(r"\w+", query.lower(), flags=re.UNICODE)
@@ -268,6 +355,12 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         # ultimate fallback: first available text (strip meta anyway)
         fallback = cand_texts[0] if cand_texts else top[0]["text"]
         answer_text = _strip_meta(fallback)
+    # If retrieval confidence is low, abstain instead of answering from snippets.
+    if abstained:
+        answer_text = (
+            "Insufficient evidence in the retrieved documents to answer confidently.\n\n"
+            "Try rephrasing the question, increasing Top-K, or adjusting include/exclude filters."
+        )
     sources = "### Sources\n" + header + "\n\n" + "\n\n".join(lines)
     log_query({
         "ts": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
