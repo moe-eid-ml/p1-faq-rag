@@ -2,13 +2,16 @@
 K ?= 3
 INCLUDE ?= wohngeld
 
-.PHONY: run test eval lint lint-fix space-push
+.PHONY: run test smoke eval lint lint-fix space-push
 
 run:
 	python app.py
 
 test:
 	PYTHONPATH=. pytest -q
+
+smoke:
+	PYTHONPATH=. pytest -q -k "abstain_on_nonsense_query or source_pointer_present_on_normal_answer"
 
 eval:
 	PYTHONPATH=. python cli.py eval --both -k $(K) --include $(INCLUDE)
