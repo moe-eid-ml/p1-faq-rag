@@ -306,6 +306,10 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     )
     if abstained:
         header += f" • **Abstain:** yes ({abstain_reason})"
+        header += (
+            "\n\n💡 **Tip:** Try rephrasing with Wohngeld-specific keywords, set **Include** → `wohngeld`, "
+            "and/or increase **Top-K** (e.g., 5–10)."
+        )
 
     # simple keyword highlights from the query
     q_tokens = re.findall(r"\w+", query.lower(), flags=re.UNICODE)
@@ -366,7 +370,10 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
     if abstained:
         answer_text = (
             "Insufficient evidence in the retrieved documents to answer confidently.\n\n"
-            "Try rephrasing the question, increasing Top-K, or adjusting include/exclude filters."
+            "Try:\n"
+            "- adding Wohngeld-specific keywords (e.g., Unterlagen, Einkommen, Bearbeitungszeit)\n"
+            "- setting **Include** → `wohngeld`\n"
+            "- increasing **Top-K** (e.g., 5–10)\n"
         )
     else:
         # Lightweight citation coverage: point to the top source we used.
