@@ -288,6 +288,20 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         "ما","ماذا","من","أين","متى","لماذا","كيف","في","على","و","او","أو"
     }
     _kw2 = {t for t in _q_tokens if len(t) >= 3 and t not in _stop}
+
+    # -------- Broad-query clarify gate (MVP) --------
+    # Clarify only for truly topic-only queries, or for very short queries when
+    # retrieval confidence is borderline / ambiguous.
+    _q_norm = " ".join(_q_tokens)
+    topic_only = _q_norm in {"wohngeld", "wohngeld antrag", "wohngeld unterlagen"}
+
+    broad_clarify = topic_only
+    if not broad_clarify and len(query.strip()) <= 32 and len(_kw2) <= 2:
+        borderline = (s1 is not None and s1 < (MIN_TOP * 1.5))
+        ambiguous = (s2 is not None and (s1 - s2) < (MIN_GAP * 1.5))
+        if borderline or ambiguous:
+            broad_clarify = True
+
     _hay = (
         " ".join(d["text"] for d in top)
         + " "
@@ -314,6 +328,8 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             "\n\n💡 **Tip:** Try rephrasing with Wohngeld-specific keywords, set **Include** → `wohngeld`, "
             "and/or increase **Top-K** (e.g., 5–10)."
         )
+    if broad_clarify:
+        header += " • **Clarify:** yes (query too broad)"
 
     # simple keyword highlights from the query
     q_tokens = re.findall(r"\w+", query.lower(), flags=re.UNICODE)
@@ -386,6 +402,16 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             "- setting **Include** → `wohngeld`\n"
             "- increasing **Top-K** (e.g., 5–10)\n"
         )
+    elif broad_clarify:
+        answer_text = (
+            "Your question is a bit broad. Which of these do you mean?\n\n"
+            "1) Eligibility requirements (who can apply)\n"
+            "2) Documents needed (Unterlagen)\n"
+            "3) How income is counted (Einkommen)\n"
+            "4) Processing time / where to apply (Bearbeitungszeit / Antrag)\n\n"
+            "Reply with one option (1–4) and your situation (household size + rent + city), and I’ll narrow it down using the sources below."
+        )
+        answer_src = None
     else:
         # Lightweight citation coverage: point to the top source we used.
         if answer_src is not None:

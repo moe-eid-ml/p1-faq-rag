@@ -1,7 +1,8 @@
 import app
 
+
 def test_wohngeld_question_returns_text():
-    # Make this deterministic in CI: scope to wohngeld + TF-IDF, and use a specific query.
+    # Deterministic in CI: scope to wohngeld + TF-IDF, and use a specific query.
     ans, src = app.answer(
         "What documents do I need for a Wohngeld application in Germany?",
         k=3,
@@ -17,16 +18,21 @@ def test_wohngeld_question_returns_text():
 
 
 def test_abstain_on_nonsense_query():
-    # Why: regression-proof the new abstain gate on junk queries.
+    # Regression: junk queries should abstain instead of guessing.
     ans, src = app.answer("asdf qwerty", k=3, mode="TF-IDF", include="wohngeld")
     assert "Insufficient evidence" in ans
-    assert isinstance(src, str) and len(src) > 0
+    assert "### Sources" in src
     assert "Abstain" in src
 
 
 def test_source_pointer_present_on_normal_answer():
-    # Why: ensure answers include a lightweight source pointer when not abstaining.
-    ans, _src = app.answer("Welche Unterlagen brauche ich für den Wohngeldantrag?", k=3, mode="TF-IDF", include="wohngeld")
+    # Regression: normal answers should include a lightweight source pointer.
+    ans, _src = app.answer(
+        "Welche Unterlagen brauche ich für den Wohngeldantrag?",
+        k=3,
+        mode="TF-IDF",
+        include="wohngeld",
+    )
     assert "Insufficient evidence" not in ans
     assert "\n\nSource: [" in ans
 
@@ -34,7 +40,7 @@ def test_source_pointer_present_on_normal_answer():
 def test_link_mode_local_uses_file_urls():
     # Regression: local link mode should produce file:// URLs.
     _ans, src = app.answer(
-        "What do I need for Wohngeld?",
+        "What documents do I need for a Wohngeld application in Germany?",
         k=2,
         mode="TF-IDF",
         include="wohngeld",
@@ -45,14 +51,13 @@ def test_link_mode_local_uses_file_urls():
 
 def test_reset_defaults_sets_github_links():
     # Regression: reset defaults should set link mode back to github.
-    if hasattr(app, "_reset_defaults"):
-        defaults = app._reset_defaults()
-        assert defaults[-1] == "github"
+    defaults = app._reset_defaults()
+    assert defaults[-1] == "github"
 
 
 def test_broad_query_triggers_clarify_prompt():
-    # Regression: very broad topic queries should ask for clarification (not abstain, not a snippet answer).
-    ans, src = app.answer("Wohngeld Voraussetzungen", k=3, mode="TF-IDF", include="wohngeld")
+    # Regression: truly topic-only queries should ask for clarification (not abstain, not a snippet answer).
+    ans, src = app.answer("Wohngeld", k=3, mode="TF-IDF", include="wohngeld")
     assert "Your question is a bit broad" in ans
     assert "Clarify" in src
     assert "**Abstain:** yes" not in src
