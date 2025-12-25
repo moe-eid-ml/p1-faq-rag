@@ -319,13 +319,17 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         ambiguous = (s2 is not None and (s1 - s2) < (MIN_GAP * 1.5))
         if borderline or ambiguous:
             broad_clarify = True
+    # If this is a topic-only query, prefer clarifying over abstaining.
+    if topic_only:
+        abstained = False
+        abstain_reason = ""
 
     _hay = (
         " ".join(d["text"] for d in top)
         + " "
         + " ".join(os.path.basename(d["path"]) for d in top)
     ).lower()
-    if _kw2 and not any(t in _hay for t in _kw2):
+    if (not topic_only) and _kw2 and not any(t in _hay for t in _kw2):
         abstained = True
         abstain_reason = "no lexical overlap with retrieved sources"
 
