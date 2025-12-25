@@ -129,6 +129,9 @@ Notes:
 # run locally
 make run
 
+# before pushing (lint + tests)
+make ci
+
 # tests
 make test
 
