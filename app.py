@@ -409,7 +409,8 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             "2) Documents needed (Unterlagen)\n"
             "3) How income is counted (Einkommen)\n"
             "4) Processing time / where to apply (Bearbeitungszeit / Antrag)\n\n"
-            "Reply with one option (1–4) and your situation (household size + rent + city), and I’ll narrow it down using the sources below."
+            "Reply with one option (1–4) and your situation (household size + rent + city), "
+            "and I’ll narrow it down using the sources below."
         )
         answer_src = None
     else:
