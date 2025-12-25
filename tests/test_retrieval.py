@@ -42,3 +42,12 @@ def test_reset_defaults_sets_github_links():
     if hasattr(app, "_reset_defaults"):
         defaults = app._reset_defaults()
         assert defaults[-1] == "github"
+
+
+def test_broad_query_triggers_clarify_prompt():
+    # Regression: very broad topic queries should ask for clarification (not abstain, not a snippet answer).
+    ans, src = app.answer("Wohngeld Voraussetzungen", k=3, mode="TF-IDF", include="wohngeld")
+    assert "Your question is a bit broad" in ans
+    assert "Clarify" in src
+    assert "Abstain" not in src
+    assert "\n\nSource: [" not in ans
