@@ -144,7 +144,7 @@ def log_query(row: dict):
             w.writeheader()
         w.writerow(row)
 
-def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
+def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", link_mode="github"):
     if not query.strip():
         return "Ask a question.", ""
 
@@ -331,7 +331,11 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude=""):
         ts = _dt.datetime.fromtimestamp(os.path.getmtime(path), tz=_dt.timezone.utc).strftime('%Y-%m-%d')
         snippet = _short(highlight(d["text"]))
         fname = os.path.basename(path)
-        url = GITHUB_BLOB_BASE + quote(path, safe="/")
+        if link_mode == "local":
+            abs_path = os.path.abspath(path)
+            url = "file://" + quote(abs_path, safe="/")
+        else:
+            url = GITHUB_BLOB_BASE + quote(path, safe="/")
         lines.append(f"[{j+1}] {snippet}  — `{fname}` • {d['lang']} • updated {ts} • [view]({url})")
 
     # pick a proper answer: skip alias blocks, meta headers, and keyword-only lists
@@ -515,11 +519,8 @@ def eval_ui(k, include, lang):
         lines.append(f"- {m.title()}: **P@{k} = {res['p_at_k']:.2f}**, **R@{k} = {res['r_at_k']:.2f}**")
     return "### Eval (data/wohngeld_eval.jsonl)\n" + "\n".join(lines)
 def _reset_defaults():
-    # k, mode, include, exclude, lang
-    return 3, "Hybrid", "wohngeld", "", "auto"
-def _reset_defaults():
-    # k, mode, include, exclude, lang
-    return 3, "TF-IDF", "wohngeld", "", "auto"
+    # k, mode, include, exclude, lang, link_mode
+    return 3, "TF-IDF", "wohngeld", "", "auto", "github"
 def _fill_q(s: str) -> str:
     return s or ""
 
@@ -569,6 +570,12 @@ def build_demo():
                 value="auto",
                 scale=1,
             )
+            link_mode = gr.Radio(
+                label="Source links",
+                choices=["github", "local"],
+                value="github",
+                scale=1,
+            )
         with gr.Row():
             sample = gr.Dropdown(
                 label="Sample question",
@@ -586,10 +593,10 @@ def build_demo():
         src = gr.Markdown(label="Top sources", elem_id="source_box")
 
         go = gr.Button("Search")
-        go.click(answer, [q, k, mode, include, lang, exclude], [ans, src])
+        go.click(answer, [q, k, mode, include, lang, exclude, link_mode], [ans, src])
         sample.change(_fill_q, [sample], [q])
         reset = gr.Button("Reset filters")
-        reset.click(_reset_defaults, [], [k, mode, include, exclude, lang])
+        reset.click(_reset_defaults, [], [k, mode, include, exclude, lang, link_mode])
         with gr.Row():
             ebtn = gr.Button("Evaluate (P@K / R@K)")
             emd = gr.Markdown()
