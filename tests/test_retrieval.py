@@ -5,6 +5,10 @@ def test_wohngeld_question_returns_text():
     assert isinstance(ans, str) and len(ans) > 0
     assert "Wohngeld" in src or "wohngeld" in src.lower()
 
+    # Regression: sources should include a clickable "view" link to the GitHub file.
+    assert "[view](" in src
+    assert "https://github.com/moe-eid-ml/p1-faq-rag/blob/main/" in src
+
 
 def test_abstain_on_nonsense_query():
     # Why: regression-proof the new abstain gate on junk queries.
