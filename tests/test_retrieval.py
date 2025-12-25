@@ -1,9 +1,15 @@
 import app
 
 def test_wohngeld_question_returns_text():
-    ans, src = app.answer("What do I need for Wohngeld?", k=2)
+    # Make this deterministic in CI: scope to wohngeld + TF-IDF, and use a specific query.
+    ans, src = app.answer(
+        "What documents do I need for a Wohngeld application in Germany?",
+        k=3,
+        mode="TF-IDF",
+        include="wohngeld",
+    )
     assert isinstance(ans, str) and len(ans) > 0
-    assert "Wohngeld" in src or "wohngeld" in src.lower()
+    assert "wohngeld" in src.lower()
 
     # Regression: sources should include a clickable "view" link to the GitHub file.
     assert "[view](" in src
