@@ -406,12 +406,12 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         )
     elif broad_clarify:
         answer_text = (
-            "Your question is a bit broad. Which of these do you mean?\n\n"
-            "1) Eligibility requirements (who can apply)\n"
-            "2) Documents needed (Unterlagen)\n"
-            "3) How income is counted (Einkommen)\n"
-            "4) Processing time / where to apply (Bearbeitungszeit / Antrag)\n\n"
-            "Reply with one option (1–4) and your situation (household size + rent + city), "
+            "Your question is a bit broad — which part do you mean?\n\n"
+            "1) Eligibility (who can apply)\n"
+            "2) Documents (Unterlagen)\n"
+            "3) Income rules (Einkommen)\n"
+            "4) Where/when to apply + processing time\n\n"
+            "Reply with 1–4 (and optionally: city + household size + rent), "
             "and I’ll narrow it down using the sources below."
         )
         answer_src = None
