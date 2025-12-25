@@ -2,7 +2,7 @@
 K ?= 3
 INCLUDE ?= wohngeld
 
-.PHONY: run test smoke eval lint lint-fix space-push
+.PHONY: run test smoke eval lint lint-fix ci space-push
 
 run:
 	python app.py
@@ -21,6 +21,8 @@ lint:
 
 lint-fix:
 	ruff check . --fix
+
+ci: lint test
 
 space-push:
 	@if [ -z "$$HF_TOKEN" ]; then echo "Set HF_TOKEN=<your HF write token> first"; exit 1; fi
