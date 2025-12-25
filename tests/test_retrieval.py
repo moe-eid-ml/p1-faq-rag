@@ -23,3 +23,22 @@ def test_source_pointer_present_on_normal_answer():
     ans, _src = app.answer("Welche Unterlagen brauche ich für den Wohngeldantrag?", k=3, mode="TF-IDF", include="wohngeld")
     assert "Insufficient evidence" not in ans
     assert "\n\nSource: [" in ans
+
+
+def test_link_mode_local_uses_file_urls():
+    # Regression: local link mode should produce file:// URLs.
+    _ans, src = app.answer(
+        "What do I need for Wohngeld?",
+        k=2,
+        mode="TF-IDF",
+        include="wohngeld",
+        link_mode="local",
+    )
+    assert "file://" in src
+
+
+def test_reset_defaults_sets_github_links():
+    # Regression: reset defaults should set link mode back to github.
+    if hasattr(app, "_reset_defaults"):
+        defaults = app._reset_defaults()
+        assert defaults[-1] == "github"
