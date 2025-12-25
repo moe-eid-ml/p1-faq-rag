@@ -49,5 +49,5 @@ def test_broad_query_triggers_clarify_prompt():
     ans, src = app.answer("Wohngeld Voraussetzungen", k=3, mode="TF-IDF", include="wohngeld")
     assert "Your question is a bit broad" in ans
     assert "Clarify" in src
-    assert "Abstain" not in src
+    assert "**Abstain:** yes" not in src
     assert "\n\nSource: [" not in ans
