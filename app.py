@@ -22,9 +22,9 @@ MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 GITHUB_BLOB_BASE = "https://github.com/moe-eid-ml/p1-faq-rag/blob/main/"
 
 # ----------------- Lang detect -----------------
-# logging flags: log locally, disable on Hugging Face Spaces
+# logging flags: opt-in locally, always disable on Hugging Face Spaces
 IS_SPACE = bool(os.getenv("SPACE_ID") or os.getenv("HF_SPACE"))
-LOG_QUERIES = not IS_SPACE
+LOG_QUERIES = (os.getenv("LOG_QUERIES", "0") == "1") and (not IS_SPACE)
 
 # ----------------- Data loading -----------------
 def load_docs():
@@ -134,6 +134,8 @@ def _prefer_lang(order_idxs, q_lang, k):
 
 # ----------------- Answer -----------------
 def log_query(row: dict):
+    if not LOG_QUERIES:
+        return
     os.makedirs("logs", exist_ok=True)
     path = os.path.join("logs", "queries.csv")
     header = ["ts","query","mode","k","include","exclude","lang_forced","lang_detected","top_files","top_langs","answer_len","corpus_size"]
@@ -434,23 +436,6 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         "answer_len": len(answer_text),
         "corpus_size": len(docs),
     })
-     # log locally only (disabled on Hugging Face)
-    if LOG_QUERIES:
-        os.makedirs("logs", exist_ok=True)
-        try:
-            import csv as _csv
-            with open("logs/queries.csv", "a", newline="", encoding="utf-8") as f:
-                w = _csv.writer(f)
-                w.writerow([
-                _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
-                    mode, int(k), q_lang,
-                    include or "",  # may be None
-                    exclude or "",
-                    *(d["path"] for d in top),
-                    *(d["lang"] for d in top),
-                ])
-        except Exception:
-            pass
     stamp = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     sources = f"Time: {stamp} • Mode: {mode} • k={k} • lang={q_lang}\n\n" + sources 
     return answer_text, sources

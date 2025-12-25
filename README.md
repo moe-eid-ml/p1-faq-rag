@@ -121,7 +121,7 @@ Scope: **Include=wohngeld** • Eval file: `data/wohngeld_eval.jsonl`
 Notes:
 - Corpus: `docs/wohngeld/` (DE/EN/AR) + official DE PDF (sentence-aware paragraphs, ~200 chars on average (median 177; p90 355; max 531)).
 - UI: TF-IDF default, Hybrid/Semantic available. Markdown sources with keyword highlights.
-- Tools: in-app **Evaluate (P@K/R@K)**, **Reset filters**, CSV query logging.
+- Tools: in-app **Evaluate (P@K/R@K)**, **Reset filters**, optional CSV query logging (opt-in; disabled by default / on HF Space).
 
 ## Development
 
@@ -131,6 +131,9 @@ make run
 
 # before pushing (lint + tests)
 make ci
+
+# optional: enable local query logging
+# export LOG_QUERIES=1
 
 # tests
 make test
