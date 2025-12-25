@@ -24,6 +24,7 @@ Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters,
 
 
 - **Abstain on low confidence:** if retrieval is weak/ambiguous, the app returns “Insufficient evidence…” instead of guessing (and still shows top sources + reason).
+- **Clarify on too-broad queries:** for topic-only prompts (e.g., `Wohngeld`), the app asks what you mean (1–4). Reply with `1–4` (optionally with context) to auto-expand into a concrete query.
 - **Lightweight source pointer:** non-abstained answers end with ``Source: [n] (`filename`)`` to make provenance obvious.
 - **CI regressions:** a fast **Smoke (fast)** job runs critical tests (abstain + source pointer) on every push/PR.
 
@@ -50,6 +51,12 @@ Then try these in the UI:
 - Set **Language (override)** → `de`
 - Query: `Wie lange dauert die Bearbeitung von Wohngeld?`
 - Expect: German answer + clear sources
+
+4) **Broad query (asks to clarify) + reply shortcut**
+- Query: `Wohngeld`
+- Expect: a clarification prompt with options 1–4
+- Then reply: `1 Berlin 2-person household`
+- Expect: a normal answer (not the clarify prompt) ending with ``Source: [n] (`filename`)``
 
 ## Quickstart
 

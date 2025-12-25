@@ -150,6 +150,22 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
     if not query.strip():
         return "Ask a question.", ""
 
+    # If the user replies with 1–4 from the clarify prompt, expand into a concrete query.
+    _q0 = query.strip()
+    _m = re.match(r"^([1-4])(?:\s*[\)\.\:\-]\s*|\s+)?(.*)$", _q0)
+    if _m:
+        _sel = _m.group(1)
+        _sel_prefixes = (f"{_sel})", f"{_sel}.", f"{_sel}:", f"{_sel}-", f"{_sel} ")
+        if _q0 == _sel or _q0.startswith(_sel_prefixes):
+            _extra = (_m.group(2) or "").strip()
+            _expand = {
+                "1": "Wohngeld eligibility requirements Voraussetzungen wer kann beantragen",
+                "2": "Wohngeld required documents Unterlagen Nachweise beizufügen",
+                "3": "Wohngeld income calculation Einkommen Freibeträge Vermögen berücksichtigt",
+                "4": "Wohngeld where to apply Antrag stellen zuständig Bearbeitungszeit",
+            }[_sel]
+            query = f"{_expand} {_extra}".strip()
+
     q_lang = lang if lang in ("de", "en", "ar") else detect_lang(query)
     includes = [s.strip().lower() for s in (include or "").split(",") if s.strip()] or None
     excludes = [s.strip().lower() for s in (exclude or "").split(",") if s.strip()] or None
