@@ -62,3 +62,8 @@ def test_broad_query_triggers_clarify_prompt():
     assert "Clarify" in src
     assert "**Abstain:** yes" not in src
     assert "\n\nSource: [" not in ans
+
+
+def test_query_logging_disabled_by_default():
+    # Privacy regression: logging should be opt-in (off by default).
+    assert app.LOG_QUERIES is False
