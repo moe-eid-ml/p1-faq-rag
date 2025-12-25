@@ -67,3 +67,17 @@ def test_broad_query_triggers_clarify_prompt():
 def test_query_logging_disabled_by_default():
     # Privacy regression: logging should be opt-in (off by default).
     assert app.LOG_QUERIES is False
+
+
+def test_clarify_reply_number_expands_to_concrete_query():
+    # Regression: replying with an option number (from the clarify prompt) should expand
+    # into a concrete query and return a normal answer (not the clarify prompt).
+    ans, src = app.answer(
+        "1 Berlin 2-person household",
+        k=3,
+        mode="TF-IDF",
+        include="wohngeld",
+    )
+    assert "Your question is a bit broad" not in ans
+    assert "\n\nSource: [" in ans
+    assert "Clarify" not in src
