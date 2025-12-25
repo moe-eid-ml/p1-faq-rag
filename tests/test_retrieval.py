@@ -81,3 +81,10 @@ def test_clarify_reply_number_expands_to_concrete_query():
     assert "Your question is a bit broad" not in ans
     assert "\n\nSource: [" in ans
     assert "Clarify" not in src
+
+
+def test_clarify_reply_does_not_trigger_on_decimal():
+    # Regression: numeric-looking inputs like "1.5" should NOT be treated as a clarify option reply.
+    ans, src = app.answer("1.5", k=3, mode="TF-IDF", include="wohngeld")
+    assert "Your question is a bit broad" not in ans
+    assert "Clarify" not in src
