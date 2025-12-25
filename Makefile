@@ -2,7 +2,7 @@
 K ?= 3
 INCLUDE ?= wohngeld
 
-.PHONY: run test smoke eval lint lint-fix ci space-push
+.PHONY: run test smoke eval lint lint-fix ci prepush space-push
 
 run:
 	python app.py
@@ -23,6 +23,18 @@ lint-fix:
 	ruff check . --fix
 
 ci: lint test
+
+prepush: ci
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "Working tree not clean. Commit or restore before pushing."; \
+		git status -sb; \
+		exit 1; \
+	fi
+	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then \
+		echo "Not on main. Switch to main before pushing."; \
+		exit 1; \
+	fi
+	@echo "Prepush OK ✅"
 
 space-push:
 	@if [ -z "$$HF_TOKEN" ]; then echo "Set HF_TOKEN=<your HF write token> first"; exit 1; fi
