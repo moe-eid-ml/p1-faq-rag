@@ -11,7 +11,7 @@ test:
 	PYTHONPATH=. pytest -q
 
 smoke:
-	PYTHONPATH=. pytest -q -k "abstain_on_nonsense_query or source_pointer_present_on_normal_answer"
+	PYTHONPATH=. pytest -q tests/test_retrieval.py -k "abstain_on_nonsense_query or source_pointer_present_on_normal_answer"
 
 eval:
 	PYTHONPATH=. python cli.py eval --both -k $(K) --include $(INCLUDE)
