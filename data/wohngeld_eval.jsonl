@@ -18,3 +18,15 @@
 {"q": "Wo stelle ich den Weiterleistungsantrag und bis wann?", "lang": "de", "keywords": ["weiterleistungsantrag", "folgeantrag", "wohngeld"], "relevant_files": ["wohngeld_weiterleistungsantrag_fristen_de.txt"]}
 {"q": "Welche Unterlagen brauche ich für den Erst-Antrag?", "lang": "de", "keywords": ["unterlagen", "antrag", "nachweise", "wohngeld"], "relevant_files": ["wohngeld_unterlagen_de.txt"]}
 {"q": "Welche Änderungen muss ich dem Amt melden (Einkommen/Haushalt/Adresse)?", "lang": "de", "keywords": ["meldung", "aenderungen", "pflicht", "wohngeld"], "relevant_files": ["wohngeld_berechnung_de.txt"]}
+{"q": "Who is eligible for Wohngeld in general?", "lang": "en", "keywords": ["eligible", "eligibility", "requirements", "wohngeld"], "relevant_files": ["wohngeld_en.txt"]}
+{"q": "How long does Wohngeld application processing usually take?", "lang": "en", "keywords": ["processing", "time", "duration", "wohngeld"], "relevant_files": ["wohngeld_en.txt"]}
+{"q": "How is the Wohngeld amount calculated (income, rent, household)?", "lang": "en", "keywords": ["calculated", "amount", "income", "rent", "household", "wohngeld"], "relevant_files": ["wohngeld_en.txt"]}
+{"q": "Can students receive Wohngeld if they get BAföG?", "lang": "en", "keywords": ["students", "bafog", "wohngeld"], "relevant_files": ["wohngeld_en.txt"]}
+{"q": "Where do I submit my Wohngeld application (which office is responsible)?", "lang": "en", "keywords": ["submit", "office", "responsible", "where", "wohngeld"], "relevant_files": ["wohngeld_en.txt"]}
+{"q": "When should I apply for a renewal (Weiterleistungsantrag) for Wohngeld?", "lang": "en", "keywords": ["renewal", "weiterleistungsantrag", "when", "wohngeld"], "relevant_files": ["wohngeld_en.txt"]}
+{"q": "من يحق له الحصول على بدل السكن (Wohngeld) بشكل عام؟", "lang": "ar", "keywords": ["يحق", "الاستحقاق", "بدل", "السكن", "wohngeld"], "relevant_files": ["wohngeld_ar.txt"]}
+{"q": "كم تستغرق معالجة طلب بدل السكن عادة؟", "lang": "ar", "keywords": ["كم", "تستغرق", "معالجة", "الطلب", "بدل", "السكن", "wohngeld"], "relevant_files": ["wohngeld_ar.txt"]}
+{"q": "كيف يتم حساب مبلغ بدل السكن (الدخل، الإيجار، عدد أفراد الأسرة)؟", "lang": "ar", "keywords": ["كيف", "حساب", "مبلغ", "بدل", "السكن", "الدخل", "الإيجار", "wohngeld"], "relevant_files": ["wohngeld_ar.txt"]}
+{"q": "هل يمكن للطلاب الحصول على بدل السكن مع/بدون BAföG؟", "lang": "ar", "keywords": ["الطلاب", "بدل", "السكن", "bafoeg", "wohngeld"], "relevant_files": ["wohngeld_ar.txt"]}
+{"q": "Wo finde ich das Merkblatt zum Wohngeld und was steht dort drin?", "lang": "de", "keywords": ["merkblatt", "info", "wohngeld"], "relevant_files": ["wohngeld_merkblatt_de.txt"]}
+{"q": "Welche offiziellen Informationen gibt es zum Wohngeld (offizielle Quelle)?", "lang": "de", "keywords": ["offiziell", "quelle", "informationen", "wohngeld"], "relevant_files": ["wohngeld_official_de.txt"]}

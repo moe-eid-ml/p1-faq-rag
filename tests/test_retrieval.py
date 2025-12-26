@@ -38,7 +38,7 @@ def test_source_pointer_present_on_normal_answer():
 
 
 def test_link_mode_local_uses_file_urls():
-    # Regression: local link mode should produce file:// URLs.
+    # Regression: local link mode should produce clickable Gradio file links (not file://).
     _ans, src = app.answer(
         "What documents do I need for a Wohngeld application in Germany?",
         k=2,
@@ -46,7 +46,7 @@ def test_link_mode_local_uses_file_urls():
         include="wohngeld",
         link_mode="local",
     )
-    assert "file://" in src
+    assert "/file=" in src
 
 
 def test_reset_defaults_sets_github_links():

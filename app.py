@@ -146,7 +146,7 @@ def log_query(row: dict):
             w.writeheader()
         w.writerow(row)
 
-def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", link_mode="github"):
+def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", link_mode="github", trace: bool = False):
     if not query.strip():
         return "Ask a question.", ""
 
@@ -177,6 +177,19 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             query = f"{_expand} {extra}".strip()
 
     q_lang = lang if lang in ("de", "en", "ar") else detect_lang(query)
+
+    trace_payload = None
+    if trace:
+        trace_payload = {
+            "mode": mode,
+            "lang_arg": lang,
+            "q_lang": q_lang,
+            "k": k,
+            "include": include,
+            "exclude": exclude,
+            "link_mode": link_mode,
+            "semantic_ready": _semantic_ready,
+        }
 
     # Heuristic: English questions containing "Wohngeld" can be misdetected as German.
     # We only apply this in auto mode to avoid overriding an explicit user choice.
@@ -238,13 +251,19 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
 
             # 3) fuse semantic + lexical using Reciprocal Rank Fusion (RRF)
+            # Guardrail: only let semantic vote with its top-N to avoid long-tail noise.
             sem_order = sem_scores.argsort()[::-1].tolist()
-            k0 = 60.0
+            SEM_CAND = 300
+            TF_CAND = min(len(tf_order), 1200)
+            k0 = 90.0
+
             rrf = {}
-            for r, i in enumerate(sem_order):
+            # Lexical first: if TF-IDF already found the right file, don't let semantic tail drag it down.
+            for r, i in enumerate(tf_order[:TF_CAND]):
                 rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
-            for r, i in enumerate(tf_order):
+            for r, i in enumerate(sem_order[:SEM_CAND]):
                 rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+
             order_idxs = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
         else:
             passages, scores = tfidf.search(query, k=_tfidf_pool())
@@ -411,8 +430,9 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         snippet = _short(highlight(d["text"]))
         fname = os.path.basename(path)
         if link_mode == "local":
-            abs_path = os.path.abspath(path)
-            url = "file://" + quote(abs_path, safe="/")
+            # Use Gradio’s file-serving route; browsers often block file:// from http pages.
+            rel = str(path).replace("\\", "/")
+            url = f"/file={quote(rel, safe='/')}"
         else:
             url = GITHUB_BLOB_BASE + quote(path, safe="/")
         lines.append(f"[{j+1}] {snippet}  — `{fname}` • {d['lang']} • updated {ts} • [view]({url})")
@@ -498,7 +518,33 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         "corpus_size": len(docs),
     })
     stamp = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    sources = f"Time: {stamp} • Mode: {mode} • k={k} • lang={q_lang}\n\n" + sources 
+    sources = f"Time: {stamp} • Mode: {mode} • k={k} • lang={q_lang}\n\n" + sources
+
+    if trace:
+        # Minimal, stable trace for demos: what settings were used + what sources were chosen.
+        trace_payload = trace_payload or {}
+        trace_payload.update(
+            {
+                "final_mode": mode,
+                "final_q_lang": q_lang,
+                "clarify": bool(broad_clarify),
+                "abstained": bool(abstained),
+                "abstain_reason": abstain_reason,
+                "tfidf_pool": _tfidf_pool(),
+                "top_docs": [
+                    {
+                        "rank": j + 1,
+                        "id": d.get("id"),
+                        "lang": d.get("lang"),
+                        "file": os.path.basename(d.get("path", "")),
+                        "path": d.get("path"),
+                    }
+                    for j, d in enumerate(top)
+                ],
+            }
+        )
+        return answer_text, sources, json.dumps(trace_payload, ensure_ascii=False, indent=2)
+
     return answer_text, sources
 
 # ----------------- In-app Eval (lazy import to avoid circular) -----------------
@@ -557,12 +603,17 @@ def eval_ui(k, include, lang):
             order = np.argsort(scores)[::-1]
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
-            k0 = 60.0
+            # Guardrail: only let semantic vote with its top-N to avoid long-tail noise.
+            SEM_CAND = 300
+            TF_CAND = min(len(tf_order), 1200)
+            k0 = 90.0
+
             rrf = {}
-            for r, i in enumerate(sem_order):
+            for r, i in enumerate(tf_order[:TF_CAND]):
                 rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
-            for r, i in enumerate(tf_order):
+            for r, i in enumerate(sem_order[:SEM_CAND]):
                 rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+
             ranked = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
         else:  # semantic
             _init_embeddings()
@@ -654,6 +705,7 @@ def build_demo():
                 value="github",
                 scale=1,
             )
+            show_trace = gr.Checkbox(label="Show trace", value=False, scale=1)
         with gr.Row():
             sample = gr.Dropdown(
                 label="Sample question",
@@ -669,9 +721,17 @@ def build_demo():
             )
         ans = gr.Textbox(label="Answer", lines=16, interactive=True, show_copy_button=True, elem_id="answer_box")
         src = gr.Markdown(label="Top sources", elem_id="source_box")
+        tr = gr.Textbox(label="Trace (JSON)", lines=10, interactive=True, show_copy_button=True)
+
+        def answer_ui(query, k, mode, include, lang, exclude, link_mode, show_trace):
+            if show_trace:
+                a, s, t = answer(query, k, mode, include, lang, exclude, link_mode, trace=True)
+                return a, s, t
+            a, s = answer(query, k, mode, include, lang, exclude, link_mode, trace=False)
+            return a, s, ""
 
         go = gr.Button("Search")
-        go.click(answer, [q, k, mode, include, lang, exclude, link_mode], [ans, src])
+        go.click(answer_ui, [q, k, mode, include, lang, exclude, link_mode, show_trace], [ans, src, tr])
         sample.change(_fill_q, [sample], [q])
         reset = gr.Button("Reset filters")
         reset.click(_reset_defaults, [], [k, mode, include, exclude, lang, link_mode])
