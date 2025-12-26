@@ -18,7 +18,36 @@ Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters,
 - Language auto-detect + override (de/en/ar)
 - Filename **Include** filter (e.g., `faq`)
 - Eval CLI: Precision@K / Recall@K
-- Gradio UI
+
+## Definition of Done (core “ready”)
+
+This project is considered **done** when:
+
+- ✅ **Demo works:** HF Space loads and answers queries (no crashes).
+- ✅ **CI is green:** `CI` + `FAQ Pipeline CI` pass on `main`.
+- ✅ **Reproducible local run:** `make run`, `make ci`, `make smoke`, `make eval` all work on a clean clone.
+- ✅ **Reliability guards:** nonsense → **Abstain**, topic-only → **Clarify**, normal → answer + `Source: [n]`.
+- ✅ **Sources are inspectable:** Sources list includes `[view](...)` links (GitHub by default).
+- ✅ **Privacy is explicit:** query logging is **opt-in** (default off; always off on HF Space).
+- ✅ **Docs match reality:** README Quickstart + Demo steps reflect current behavior.
+
+## Core TODO (finish line)
+
+In priority order:
+
+1) **Stability + UX**
+   - Ensure the clarify “1–4 reply” flow works smoothly end-to-end in the UI.
+   - Add a tiny “How to answer clarify” hint near the prompt (already documented in README).
+
+2) **Evaluation + proof**
+   - Keep `EVAL.md`/Results up to date with current corpus + defaults.
+   - Keep smoke tests covering the top failure modes.
+
+3) **Packaging polish**
+   - Confirm fresh install steps (venv + requirements) and `make` targets stay consistent.
+   - Keep CI using Makefile targets (no drift).
+
+Extras (only after core is done): reranker, calibration/confidence score, FastAPI/Docker deployment, richer tracing UI.
 
 ## Reliability (proof-driven)
 
