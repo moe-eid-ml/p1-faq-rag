@@ -1,20 +1,20 @@
-{"q": "Welche Unterlagen brauche ich für Wohngeld?", "lang": "de", "keywords": ["unterlagen", "antrag", "nachweise", "wohngeld"]}
-{"q": "Was sind die Voraussetzungen für Wohngeld?", "lang": "de", "keywords": ["wohngeld"]}
-{"q": "What documents do I need for Wohngeld?", "lang": "en", "keywords": ["wohngeld"]}
-{"q": "ما هي المستندات المطلوبة للحصول على بدل السكن؟", "lang": "ar", "keywords": ["wohngeld"]}
-{"q": "Wie lange dauert die Bearbeitung des Wohngeldantrags?", "lang": "de", "keywords": ["bearbeitungszeit", "dauer", "wohngeld"]}
-{"q": "Welche Unterlagen brauche ich für den Wohngeldantrag?", "lang": "de", "keywords": ["unterlagen", "antrag", "nachweise", "wohngeld"]}
-{"q": "Wo stelle ich den Wohngeldantrag in meiner Stadt?", "lang": "de", "keywords": ["zustaendigkeit", "stelle", "amt", "wohngeld"]}
-{"q": "Wie lange dauert die Bearbeitung vom Wohngeld in der Regel?", "lang": "de", "keywords": ["bearbeitungszeit", "dauer", "wohngeld"]}
-{"q": "Wie wird die Höhe des Wohngelds berechnet?", "lang": "de", "keywords": ["wohngeld"]}
-{"q": "Wann sollte ich den Weiterleistungsantrag stellen?", "lang": "de", "keywords": ["weiterleistungsantrag", "folgeantrag", "wohngeld"]}
-{"keywords": ["anspruch", "berechtigung", "haushalt", "wohngeld"], "q": "Wer hat grundsätzlich Anspruch auf Wohngeld?"}
-{"keywords": ["einkommen", "angerechnet", "freibetrag", "wohngeld"], "q": "Welche Einkünfte werden beim Wohngeld angerechnet?"}
-{"keywords": ["mietstufe", "miete", "hoechstbetrag", "wohngeld"], "q": "Welche Miete/Belastung wird maximal berücksichtigt (Mietstufe)?"}
-{"keywords": ["studierende", "bafoeg", "wohngeld"], "q": "Zählen Studenten/Studentinnen zum Wohngeld? (mit/ohne BAföG)"}
-{"keywords": ["buergergeld", "wohngeld"], "q": "Bekomme ich Wohngeld bei Bürgergeld-Bezug?"}
-{"keywords": ["bearbeitungszeit", "dauer", "wohngeld"], "q": "Wie lange dauert die Bearbeitung eines Wohngeldantrags?"}
-{"keywords": ["rueckwirkung", "beginn", "wohngeld"], "q": "Ab wann wird Wohngeld gezahlt (Rückwirkung)?"}
-{"keywords": ["weiterleistungsantrag", "folgeantrag", "wohngeld"], "q": "Wo stelle ich den Weiterleistungsantrag und bis wann?"}
-{"keywords": ["unterlagen", "antrag", "nachweise", "wohngeld"], "q": "Welche Unterlagen brauche ich für den Erst-Antrag?"}
-{"keywords": ["meldung", "aenderungen", "pflicht", "wohngeld"], "q": "Welche Änderungen muss ich dem Amt melden (Einkommen/Haushalt/Adresse)?"}
+{"q": "Welche Unterlagen brauche ich für Wohngeld?", "lang": "de", "keywords": ["unterlagen", "antrag", "nachweise", "wohngeld"], "relevant_files": ["wohngeld_unterlagen_de.txt"]}
+{"q": "Was sind die Voraussetzungen für Wohngeld?", "lang": "de", "keywords": ["voraussetzungen", "anspruch", "berechtigung", "haushalt", "wohngeld"], "relevant_files": ["wohngeld_voraussetzungen_de.txt"]}
+{"q": "What documents do I need for Wohngeld?", "lang": "en", "keywords": ["documents", "required", "application", "proof", "wohngeld"], "relevant_files": ["wohngeld_en.txt"]}
+{"q": "ما هي المستندات المطلوبة للحصول على بدل السكن؟", "lang": "ar", "keywords": ["المستندات", "الوثائق", "مطلوبة", "بدل", "السكن", "wohngeld"], "relevant_files": ["wohngeld_ar.txt"]}
+{"q": "Wie lange dauert die Bearbeitung des Wohngeldantrags?", "lang": "de", "keywords": ["bearbeitungszeit", "dauer", "wohngeld"], "relevant_files": ["wohngeld_bearbeitungszeit_auszahlung_de.txt"]}
+{"q": "Welche Unterlagen brauche ich für den Wohngeldantrag?", "lang": "de", "keywords": ["unterlagen", "antrag", "nachweise", "wohngeld"], "relevant_files": ["wohngeld_unterlagen_de.txt"]}
+{"q": "Wo stelle ich den Wohngeldantrag in meiner Stadt?", "lang": "de", "keywords": ["zustaendigkeit", "stelle", "amt", "wohngeld"], "relevant_files": ["wohngeld_antragstellung_zustaendigkeit_de.txt"]}
+{"q": "Wie lange dauert die Bearbeitung vom Wohngeld in der Regel?", "lang": "de", "keywords": ["bearbeitungszeit", "dauer", "wohngeld"], "relevant_files": ["wohngeld_bearbeitungszeit_auszahlung_de.txt"]}
+{"q": "Wie wird die Höhe des Wohngelds berechnet?", "lang": "de", "keywords": ["berechnung", "hoehe", "einkommen", "mietstufe", "wohngeld"], "relevant_files": ["wohngeld_berechnung_de.txt"]}
+{"q": "Wann sollte ich den Weiterleistungsantrag stellen?", "lang": "de", "keywords": ["weiterleistungsantrag", "folgeantrag", "wohngeld"], "relevant_files": ["wohngeld_weiterleistungsantrag_fristen_de.txt"]}
+{"q": "Wer hat grundsätzlich Anspruch auf Wohngeld?", "lang": "de", "keywords": ["anspruch", "berechtigung", "haushalt", "wohngeld"], "relevant_files": ["wohngeld_voraussetzungen_de.txt"]}
+{"q": "Welche Einkünfte werden beim Wohngeld angerechnet?", "lang": "de", "keywords": ["einkommen", "angerechnet", "freibetrag", "wohngeld"], "relevant_files": ["wohngeld_berechnung_de.txt"]}
+{"q": "Welche Miete/Belastung wird maximal berücksichtigt (Mietstufe)?", "lang": "de", "keywords": ["mietstufe", "miete", "hoechstbetrag", "wohngeld"], "relevant_files": ["wohngeld_berechnung_de.txt"]}
+{"q": "Zählen Studenten/Studentinnen zum Wohngeld? (mit/ohne BAföG)", "lang": "de", "keywords": ["studierende", "bafoeg", "wohngeld"], "relevant_files": ["wohngeld_voraussetzungen_de.txt"]}
+{"q": "Bekomme ich Wohngeld bei Bürgergeld-Bezug?", "lang": "de", "keywords": ["buergergeld", "wohngeld"], "relevant_files": ["wohngeld_voraussetzungen_de.txt"]}
+{"q": "Wie lange dauert die Bearbeitung eines Wohngeldantrags?", "lang": "de", "keywords": ["bearbeitungszeit", "dauer", "wohngeld"], "relevant_files": ["wohngeld_bearbeitungszeit_auszahlung_de.txt"]}
+{"q": "Ab wann wird Wohngeld gezahlt (Rückwirkung)?", "lang": "de", "keywords": ["rueckwirkung", "beginn", "wohngeld"], "relevant_files": ["wohngeld_bearbeitungszeit_auszahlung_de.txt"]}
+{"q": "Wo stelle ich den Weiterleistungsantrag und bis wann?", "lang": "de", "keywords": ["weiterleistungsantrag", "folgeantrag", "wohngeld"], "relevant_files": ["wohngeld_weiterleistungsantrag_fristen_de.txt"]}
+{"q": "Welche Unterlagen brauche ich für den Erst-Antrag?", "lang": "de", "keywords": ["unterlagen", "antrag", "nachweise", "wohngeld"], "relevant_files": ["wohngeld_unterlagen_de.txt"]}
+{"q": "Welche Änderungen muss ich dem Amt melden (Einkommen/Haushalt/Adresse)?", "lang": "de", "keywords": ["meldung", "aenderungen", "pflicht", "wohngeld"], "relevant_files": ["wohngeld_berechnung_de.txt"]}

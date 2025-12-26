@@ -3,11 +3,34 @@ import json
 from os.path import basename
 import numpy as np
 
+try:
+    from sentence_transformers import SentenceTransformer
+except Exception:
+    SentenceTransformer = None
+
 import app
 from eval import evaluate_run
 
+_SEM_MODEL = None
+_SEM_X = None
+
+def _ensure_semantic():
+    global _SEM_MODEL, _SEM_X
+    if _SEM_MODEL is not None and _SEM_X is not None:
+        return
+    if SentenceTransformer is None:
+        return
+    try:
+        _SEM_MODEL = SentenceTransformer(getattr(app, "MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2"))
+        emb = _SEM_MODEL.encode([d["text"] for d in app.docs], normalize_embeddings=True, show_progress_bar=False)
+        _SEM_X = np.asarray(emb, dtype=np.float32)
+    except Exception:
+        _SEM_MODEL = None
+        _SEM_X = None
+
 def semantic_available() -> bool:
-    return getattr(app, "embedder", None) is not None and getattr(app, "doc_embeddings", None) is not None
+    _ensure_semantic()
+    return _SEM_MODEL is not None and _SEM_X is not None
 
 def load_eval(path="data/wohngeld_eval.jsonl"):
     items = []
@@ -40,10 +63,41 @@ def ground_truth_ids(item, includes=None, excludes=None):
             ids.append(i)
     return ids
 
-def predict_ids(query, mode, k, includes=None, excludes=None):
+def ground_truth_file_ids(item, file_id_map, includes=None, excludes=None):
+    # If the eval item specifies relevant files explicitly, use that as file-level GT.
+    rf = item.get("relevant_files")
+    if rf:
+        out = []
+        for f in rf:
+            key = basename(f).lower()
+            if key in file_id_map:
+                out.append(file_id_map[key])
+        return _unique_preserve_order(out)
+
+    # Fallback: derive file-level GT from chunk-level GT (keywords-based).
+    ids = ground_truth_ids(item, includes, excludes)
+    return to_file_ids(ids, file_id_map)
+
+def _file_key(doc_id: int) -> str:
+    return basename(app.docs[doc_id]["path"]).lower()
+
+def _unique_preserve_order(items):
+    out = []
+    seen = set()
+    for x in items:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
+
+def to_file_ids(doc_ids, file_id_map):
+    keys = _unique_preserve_order(_file_key(i) for i in doc_ids)
+    return [file_id_map[k] for k in keys if k in file_id_map]
+
+def predict_ids(query, mode, k, includes=None, excludes=None, q_lang_override=None):
     m = mode.lower()
     if m == "tfidf":
-        passages, scores = app.tfidf.search(query, k=max(k * 3, 12))
+        passages, scores = app.tfidf.search(query, k=max(k * 10, 200))
         order = np.argsort(scores)[::-1]
         idx_map = [app.DOC_INDEX.get((p["path"], p["text"])) for p in passages]
         ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
@@ -58,8 +112,9 @@ def predict_ids(query, mode, k, includes=None, excludes=None):
             ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
         else:
             # semantic ranking
-            q_emb = app.embedder.encode(query, convert_to_numpy=True)
-            sem_scores = app.cos_scores_np(q_emb, app.doc_embeddings)
+            q_emb = _SEM_MODEL.encode([query], normalize_embeddings=True, show_progress_bar=False)
+            q_emb = np.asarray(q_emb, dtype=np.float32).reshape(-1)
+            sem_scores = _SEM_X @ q_emb
             sem_order = sem_scores.argsort()[::-1].tolist()
             # tf-idf (wider pool)
             passages, scores = app.tfidf.search(query, k=max(k * 10, 200))
@@ -78,19 +133,20 @@ def predict_ids(query, mode, k, includes=None, excludes=None):
     else:  # semantic
         if not semantic_available():
             # Fall back to TF-IDF when embeddings are unavailable.
-            passages, scores = app.tfidf.search(query, k=max(k * 3, 12))
+            passages, scores = app.tfidf.search(query, k=max(k * 10, 200))
             order = np.argsort(scores)[::-1]
             idx_map = [app.DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
         else:
-            q_emb = app.embedder.encode(query, convert_to_numpy=True)
-            scores = app.cos_scores_np(q_emb, app.doc_embeddings)
+            q_emb = _SEM_MODEL.encode([query], normalize_embeddings=True, show_progress_bar=False)
+            q_emb = np.asarray(q_emb, dtype=np.float32).reshape(-1)
+            scores = _SEM_X @ q_emb
             ranked = scores.argsort()[::-1].tolist()
 
     # filename filter
     ranked = [i for i in ranked if file_ok(app.docs[i]["path"], includes, excludes)]
-    # language preference
-    q_lang = app.detect_lang(query)
+    # language preference (use eval item's declared lang when provided)
+    q_lang = q_lang_override or app.detect_lang(query)
     primary = [i for i in ranked if app.docs[i]["lang"] == q_lang]
     secondary = [i for i in ranked if app.docs[i]["lang"] != q_lang]
     out = []
@@ -115,11 +171,53 @@ def main():
     items = load_eval(args.file)
     gt = [ground_truth_ids(it, args.include, args.exclude) for it in items]
 
-    modes = ["tfidf","semantic"] if args.both else [args.mode]
+    all_files = sorted({basename(d["path"]).lower() for d in app.docs})
+    file_id_map = {f: i for i, f in enumerate(all_files)}
+    gt_files = [ground_truth_file_ids(it, file_id_map, args.include, args.exclude) for it in items]
+
+    modes = ["tfidf", "semantic", "hybrid"] if args.both else [args.mode]
     for m in modes:
-        preds = [predict_ids(it["q"], m, args.k, args.include, args.exclude) for it in items]
+        preds = [
+            predict_ids(it["q"], m, args.k, args.include, args.exclude, q_lang_override=it.get("lang"))
+            for it in items
+        ]
         res = evaluate_run(gt, preds, k=args.k)
-        print(json.dumps({"mode": m, **res}, ensure_ascii=False))
+
+        preds_files = [to_file_ids(p, file_id_map) for p in preds]
+        res_files = evaluate_run(gt_files, preds_files, k=args.k)
+
+        # Per-language breakdown (diagnostic, helps spot DE/EN/AR skew)
+        by_lang = {}
+        for L in sorted({it.get("lang", "en") for it in items}):
+            idxs = [i for i, it in enumerate(items) if it.get("lang", "en") == L]
+            if not idxs:
+                continue
+            gt_L = [gt[i] for i in idxs]
+            pr_L = [preds[i] for i in idxs]
+            gtF_L = [gt_files[i] for i in idxs]
+            prF_L = [preds_files[i] for i in idxs]
+            rL = evaluate_run(gt_L, pr_L, k=args.k)
+            rFL = evaluate_run(gtF_L, prF_L, k=args.k)
+            by_lang[L] = {
+                "p_at_k": rL["p_at_k"],
+                "r_at_k": rL["r_at_k"],
+                "file_p_at_k": rFL["p_at_k"],
+                "file_r_at_k": rFL["r_at_k"],
+                "queries": len(idxs),
+            }
+
+        print(
+            json.dumps(
+                {
+                    "mode": m,
+                    **res,
+                    "file_p_at_k": res_files["p_at_k"],
+                    "file_r_at_k": res_files["r_at_k"],
+                    "by_lang": by_lang,
+                },
+                ensure_ascii=False,
+            )
+        )
 
 if __name__ == "__main__":
     main()

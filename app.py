@@ -177,15 +177,38 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             query = f"{_expand} {extra}".strip()
 
     q_lang = lang if lang in ("de", "en", "ar") else detect_lang(query)
+
+    # Heuristic: English questions containing "Wohngeld" can be misdetected as German.
+    # We only apply this in auto mode to avoid overriding an explicit user choice.
+    if lang == "auto" and q_lang == "de":
+        _toks = set(re.findall(r"[A-Za-z]+", query.lower()))
+        _en_hint = {
+            "what","which","where","when","why","how",
+            "documents","required","need","apply","application","processing","time",
+            "eligibility","income","rent","proof",
+        }
+        _de_hint = {
+            "unterlagen","antrag","berechnung","einkommen","bearbeitung","mietstufe",
+            "voraussetzungen","anspruch","wer","wie","wo","wann","dauer",
+        }
+        if (len(_toks & _en_hint) >= 2) and (len(_toks & _de_hint) == 0):
+            q_lang = "en"
     includes = [s.strip().lower() for s in (include or "").split(",") if s.strip()] or None
     excludes = [s.strip().lower() for s in (exclude or "").split(",") if s.strip()] or None
+
+    def _tfidf_pool() -> int:
+        # Wider pool helps ensure language preference has candidates (especially EN/AR).
+        pool = max(k * 10, 200)
+        if q_lang in ("en", "ar"):
+            pool = max(pool, 1200)
+        return pool
 
     # retrieval confidence helpers
     tfidf_score_by_id = {}
     used_semantic_scores = False
 
     if mode == "TF-IDF":
-        passages, scores = tfidf.search(query, k=max(k * 3, 12))
+        passages, scores = tfidf.search(query, k=_tfidf_pool())
         order = np.argsort(scores)[::-1]
         idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
         order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
@@ -209,17 +232,22 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             used_semantic_scores = True
 
             # 2) lexical candidate pool (broad)
-            passages, scores = tfidf.search(query, k=max(200, k * 50))
+            passages, scores = tfidf.search(query, k=_tfidf_pool())
             order = np.argsort(scores)[::-1]
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             tf_order = [idx for j in order for idx in [idx_map[j]] if idx is not None]
 
-            # 3) rerank TF-IDF top-N by semantic similarity
-            CAND = 200
-            candidates = tf_order[:CAND]
-            order_idxs = sorted(candidates, key=lambda i: float(sem_scores[i]), reverse=True)
+            # 3) fuse semantic + lexical using Reciprocal Rank Fusion (RRF)
+            sem_order = sem_scores.argsort()[::-1].tolist()
+            k0 = 60.0
+            rrf = {}
+            for r, i in enumerate(sem_order):
+                rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+            for r, i in enumerate(tf_order):
+                rrf[i] = rrf.get(i, 0.0) + 1.0 / (k0 + r + 1)
+            order_idxs = [i for i, _ in sorted(rrf.items(), key=lambda x: x[1], reverse=True)]
         else:
-            passages, scores = tfidf.search(query, k=max(k * 3, 12))
+            passages, scores = tfidf.search(query, k=_tfidf_pool())
             order = np.argsort(scores)[::-1]
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
@@ -235,7 +263,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         _init_embeddings()
         if not _semantic_ready:
             # fallback to TF-IDF if semantic deps are missing
-            passages, scores = tfidf.search(query, k=max(k * 3, 12))
+            passages, scores = tfidf.search(query, k=_tfidf_pool())
             order = np.argsort(scores)[::-1]
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             order_idxs = [idx for j in order for idx in [idx_map[j]] if idx is not None]
@@ -323,8 +351,11 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
     _q_norm = " ".join(_q_tokens)
     topic_only = _q_norm in {"wohngeld", "wohngeld antrag", "wohngeld unterlagen"}
 
+    # Avoid clarifying on purely numeric/punctuation queries (e.g., "1.5").
+    has_alpha = bool(re.search(r"[A-Za-zÄÖÜäöü\u0600-\u06FF]", query))
+
     broad_clarify = topic_only
-    if not broad_clarify and len(query.strip()) <= 32 and len(_kw2) <= 2:
+    if has_alpha and (not broad_clarify) and len(query.strip()) <= 32 and len(_kw2) <= 2:
         borderline = (s1 is not None and s1 < (MIN_TOP * 1.5))
         ambiguous = (s2 is not None and (s1 - s2) < (MIN_GAP * 1.5))
         if borderline or ambiguous:
@@ -505,14 +536,14 @@ def eval_ui(k, include, lang):
     def _predict_ids(query, mode):
         m = mode.lower()
         if m == "tfidf":
-            passages, scores = tfidf.search(query, k=max(k * 3, 12))
+            passages, scores = tfidf.search(query, k=max(k * 10, 200))
             order = np.argsort(scores)[::-1]
             idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
             ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
         elif m == "hybrid":
             _init_embeddings()
             if not _semantic_ready:
-                passages, scores = tfidf.search(query, k=max(k * 3, 12))
+                passages, scores = tfidf.search(query, k=max(k * 10, 200))
                 order = np.argsort(scores)[::-1]
                 idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
                 ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
@@ -536,7 +567,7 @@ def eval_ui(k, include, lang):
         else:  # semantic
             _init_embeddings()
             if not _semantic_ready:
-                passages, scores = tfidf.search(query, k=max(k * 3, 12))
+                passages, scores = tfidf.search(query, k=max(k * 10, 200))
                 order = np.argsort(scores)[::-1]
                 idx_map = [DOC_INDEX.get((p["path"], p["text"])) for p in passages]
                 ranked = [idx for j in order for idx in [idx_map[j]] if idx is not None]
