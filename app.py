@@ -591,7 +591,12 @@ def build_demo():
             "[Hugging Face Space](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)"
         )
         with gr.Row():
-            q = gr.Textbox(label="Your question", lines=4, scale=3, placeholder="Ask in English, Deutsch, or العربية")
+            q = gr.Textbox(
+                label="Your question",
+                lines=4,
+                scale=3,
+                placeholder="Ask in English, Deutsch, or العربية (if asked to clarify, reply with 1-4 + optional context)",
+            )
             k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
             mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="TF-IDF", label="Retrieval mode")
             include = gr.Textbox(
