@@ -5,7 +5,6 @@ import json
 import numpy as np
 import csv
 
-from urllib.parse import quote
 
 # Gradio is optional: tests/CI import this module without needing the UI.
 try:
@@ -17,6 +16,7 @@ from tfidf import TfidfRetriever
 import datetime as _dt
 
 from app_pkg.lang import detect_lang, AR_RE
+from app_pkg.retrieval import source_url
 MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 GITHUB_BLOB_BASE = "https://github.com/moe-eid-ml/p1-faq-rag/blob/main/"
@@ -429,12 +429,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         ts = _dt.datetime.fromtimestamp(os.path.getmtime(path), tz=_dt.timezone.utc).strftime('%Y-%m-%d')
         snippet = _short(highlight(d["text"]))
         fname = os.path.basename(path)
-        if link_mode == "local":
-            # Use Gradio’s file-serving route; browsers often block file:// from http pages.
-            rel = str(path).replace("\\", "/")
-            url = f"/file={quote(rel, safe='/')}"
-        else:
-            url = GITHUB_BLOB_BASE + quote(path, safe="/")
+        url = source_url(path, link_mode=link_mode, github_blob_base=GITHUB_BLOB_BASE)
         lines.append(f"[{j+1}] {snippet}  — `{fname}` • {d['lang']} • updated {ts} • [view]({url})")
 
     # pick a proper answer: skip alias blocks, meta headers, and keyword-only lists
