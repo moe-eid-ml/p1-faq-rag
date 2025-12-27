@@ -5,11 +5,18 @@
 
 ![App screenshot](assets/ui.png)
 
-Compact RAG app for German **Wohngeld** questions. Dual retrievers (TF-IDF, Semantic) + Hybrid rerank. Gradio UI with in-app P@K/R@K evaluation. Deployed on Hugging Face.
+Compact RAG app for German **Wohngeld** questions. Dual retrievers (TF-IDF, Semantic) + optional Hybrid fusion. Gradio UI with in-app evaluation + CLI eval. Deployed on Hugging Face.
 
 ## Multilingual FAQ RAG (EN/DE/AR)
 
 Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters, and a metrics CLI.
+
+## Project layout (source of truth)
+
+- `app.py` — Gradio UI + core `answer()` flow (retrieval → abstain/clarify → cited output)
+- `cli.py` / `ask.py` — headless evaluation + terminal querying
+- `app_pkg/` — small shared utilities (e.g., language detection and source link building)
+- `docs/` + `data/` — corpora + eval sets
 
 
 ## Features
@@ -113,18 +120,28 @@ python cli.py eval --both -k 3 --include faq
 ## Wohngeld MVP (Multilingual)
 
 - **Corpus:** `docs/wohngeld` (DE/EN/AR). Other texts archived and excluded from index.
-- **Default mode:** Hybrid (RRF).
+- **Default mode:** TF-IDF (safe default).
 - **UI tip:** set **Include** → `wohngeld`; use **Language (override)** for strict DE/EN/AR.
 
 ### Eval — `data/wohngeld_eval.jsonl`
 
-**k=3 (Include=wohngeld)**
-- TF-IDF: **P@3 = 0.40**, **R@3 = 1.00**
-- Semantic: **P@3 = 0.40**, **R@3 = 1.00**
-- Hybrid: **P@3 = 0.40**, **R@3 = 1.00**
+**Snapshot (Include=wohngeld, queries=32)**
 
-**k=1 (Include=wohngeld)**
-- Hybrid: **P@1 = 0.80**, **R@1 = 0.70**
+- **k=3**
+  - **TF-IDF:** `file_r@3 = 0.84375` (DE `0.75`)
+  - **Semantic:** `file_r@3 = 0.78125` (DE `0.65`)
+  - **Hybrid:** `file_r@3 = 0.71875` (DE `0.55`)
+
+- **k=5**
+  - **TF-IDF:** `file_r@5 = 0.9375` (DE `0.90`)
+  - **Semantic:** `file_r@5 = 0.84375` (DE `0.75`)
+  - **Hybrid:** `file_r@5 = 0.8125` (DE `0.70`)
+
+Run:
+```bash
+python cli.py eval --both -k 3 --include wohngeld
+python cli.py eval --both -k 5 --include wohngeld
+```
 
 ## Tooling (FAQ corpus / Arabic seed)
 
@@ -144,20 +161,19 @@ We use a small Typer CLI to keep the FAQ corpus clean and builds reproducible.
 - No secrets committed. Use `.env.example` (not `.env`).
 - `.gitignore` excludes `.venv/`, `build/`, `__pycache__/`, `.pytest_cache/`.
 
-## 📊 Current Metrics (2025-11-14)
+## 📊 Current Metrics (2025-12-27)
 
-Scope: **Include=wohngeld** • Eval file: `data/wohngeld_eval.jsonl`
+Scope: **Include=wohngeld** • Eval file: `data/wohngeld_eval.jsonl` • Commit: `50c82f7`
 
-- **P@1 (Hybrid, k=1):** 0.80
-- **P@3 (k=3):**
-  - **TF-IDF:** P@3 = 0.60 • R@3 ≈ 0.65
-  - **Semantic:** P@3 ≈ 0.47 • R@3 ≈ 0.55–0.60
-  - **Hybrid:** P@3 ≈ 0.47 • R@3 ≈ 0.55
+Headline (file-level recall):
+- **TF-IDF:** `file_r@3 = 0.84375`, `file_r@5 = 0.9375`
+- **DE only:** `file_r@3 = 0.75`, `file_r@5 = 0.90`
 
 Notes:
-- Corpus: `docs/wohngeld/` (DE/EN/AR) + official DE PDF (sentence-aware paragraphs, ~200 chars on average (median 177; p90 355; max 531)).
-- UI: TF-IDF default, Hybrid/Semantic available. Markdown sources with keyword highlights.
-- Tools: in-app **Evaluate (P@K/R@K)**, **Reset filters**, optional CSV query logging (opt-in; disabled by default / on HF Space).
+- Corpus: `docs/wohngeld/` (DE/EN/AR) + official DE PDF (sentence-aware paragraphs).
+- UI: TF-IDF default; Hybrid/Semantic available.
+- Sources: clickable links (GitHub by default; local via `/file=`).
+- Tools: in-app **Evaluate (P@K/R@K)**, optional CSV query logging (opt-in; disabled by default / on HF Space).
 
 ## Development
 
