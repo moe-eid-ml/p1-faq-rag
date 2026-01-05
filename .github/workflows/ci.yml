@@ -25,7 +25,10 @@ jobs:
           if [ -f pyproject.toml ]; then
             pip install -e .
           fi
-          pip install pytest
+          pip install pytest ruff
+
+      - name: Lint (ruff)
+        run: ruff check .
 
       - name: Run tests
         run: pytest -q
