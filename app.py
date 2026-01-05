@@ -4,6 +4,8 @@ import re
 import json
 import numpy as np
 import csv
+import hashlib
+import uuid
 
 
 # Gradio is optional: tests/CI import this module without needing the UI.
@@ -148,6 +150,35 @@ def log_query(row: dict):
 
 def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", link_mode="github", trace: bool = False):
     if not query.strip():
+        if trace:
+            trace_id = str(uuid.uuid4())
+            ts = _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            pipeline_version = os.getenv("GITHUB_SHA") or os.getenv("SNIPER_PIPELINE_VERSION") or "dev"
+
+            sniper_trace_v1 = {
+                "trace_id": trace_id,
+                "timestamp": ts,
+                "query": query,
+                "verdict": "YELLOW",
+                "verdict_reason": "empty_query",
+                "answer": None,
+                "sources": [],
+                "model_version": os.getenv("MODEL_VERSION", "unknown"),
+                "pipeline_version": pipeline_version,
+            }
+
+            trace_payload = {
+                "mode": mode,
+                "include": include,
+                "exclude": exclude,
+                "k": k,
+                "link_mode": link_mode,
+                "query": query,
+                "sniper_trace_v1": sniper_trace_v1,
+            }
+
+            return "Ask a question.", "", json.dumps(trace_payload, ensure_ascii=False, indent=2)
+
         return "Ask a question.", ""
 
     # If the user replies with 1–4 from the clarify prompt, expand into a concrete query.
@@ -315,6 +346,35 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
     chosen = _prefer_lang(order_idxs, q_lang, k)
     top = [docs[i] for i in chosen]
     if not top:
+        if trace:
+            trace_id = str(uuid.uuid4())
+            ts = _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            pipeline_version = os.getenv("GITHUB_SHA") or os.getenv("SNIPER_PIPELINE_VERSION") or "dev"
+
+            sniper_trace_v1 = {
+                "trace_id": trace_id,
+                "timestamp": ts,
+                "query": query,
+                "verdict": "YELLOW",
+                "verdict_reason": "no_results",
+                "answer": None,
+                "sources": [],
+                "model_version": os.getenv("MODEL_VERSION", "unknown"),
+                "pipeline_version": pipeline_version,
+            }
+
+            trace_payload = {
+                "mode": mode,
+                "include": include,
+                "exclude": exclude,
+                "k": k,
+                "link_mode": link_mode,
+                "query": query,
+                "sniper_trace_v1": sniper_trace_v1,
+            }
+
+            return "No results.", "", json.dumps(trace_payload, ensure_ascii=False, indent=2)
+
         return "No results.", ""
 
     # -------- Abstain gate (MVP) --------
@@ -538,6 +598,59 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
                 ],
             }
         )
+
+        # ----------------- Sniper provenance emission (Phase B: emission only) -----------------
+        # We emit a Sniper-compatible provenance trace block so downstream adapters/checkers
+        # can start consuming stable structure. Verdict stays conservative (no GREEN yet).
+        pipeline_version = os.getenv("GITHUB_SHA") or os.getenv("SNIPER_PIPELINE_VERSION") or "dev"
+        def _to_01(x):
+            if x is None:
+                return 0.0
+            try:
+                x = float(x)
+            except Exception:
+                return 0.0
+            # Cosine similarity can be [-1, 1]; map to [0, 1] when semantic was used.
+            if used_semantic_scores:
+                x = (x + 1.0) / 2.0
+            return max(0.0, min(1.0, x))
+
+        sources_v1 = []
+        for rank, idx in enumerate(chosen, start=1):
+            d = docs[idx]
+            chunk_text = d.get("text", "") or ""
+            chunk_hash = hashlib.sha256(chunk_text.encode("utf-8")).hexdigest()
+            retrieval_score = _to_01(_score_for(idx))
+            sources_v1.append(
+                {
+                    "source_id": f"{d.get('path', '')}#doc{d.get('id')}",
+                    "chunk_hash": chunk_hash,
+                    "chunk_text": chunk_text,
+                    "retrieval_score": retrieval_score,
+                    "page_ref": None,
+                }
+            )
+
+        # Phase B policy: provenance is emitted, but we still do not certify GREEN.
+        sniper_verdict = "YELLOW"
+        sniper_reason = (
+            "clarify" if bool(broad_clarify)
+            else f"abstain:{abstain_reason}" if bool(abstained)
+            else "phase_b_provenance_emission_only"
+        )
+
+        trace_payload["sniper_trace_v1"] = {
+            "trace_id": str(uuid.uuid4()),
+            "timestamp": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+            "query": query,
+            "verdict": sniper_verdict,
+            "verdict_reason": sniper_reason,
+            "answer": None if sniper_verdict == "RED" else answer_text,
+            "sources": sources_v1,
+            "model_version": MODEL_NAME,
+            "pipeline_version": pipeline_version,
+        }
+
         return answer_text, sources, json.dumps(trace_payload, ensure_ascii=False, indent=2)
 
     return answer_text, sources
