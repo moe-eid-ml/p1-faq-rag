@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import datetime as _dt
 from typing import Any, Dict, List, Optional
 
 
@@ -26,6 +27,45 @@ def _as_str(x: Any) -> str:
         return "" if x is None else str(x)
     except Exception:
         return ""
+
+
+def _parse_iso_z(ts: str) -> Optional[_dt.datetime]:
+    """Parse ISO timestamps that may end with 'Z' into aware UTC datetimes."""
+    if not ts:
+        return None
+    s = ts.strip()
+    try:
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        dt = _dt.datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=_dt.timezone.utc)
+        return dt.astimezone(_dt.timezone.utc)
+    except Exception:
+        return None
+
+
+def _parse_source_mtime(src: Dict[str, Any]) -> Optional[_dt.datetime]:
+    """Best-effort parse of source modified timestamps.
+
+    Supports epoch seconds and ISO strings under common keys.
+    """
+    for key in ("mtime", "modified_at", "updated_at", "file_mtime", "source_mtime", "timestamp"):
+        v = src.get(key)
+        if v is None:
+            continue
+        # epoch seconds
+        if isinstance(v, (int, float)):
+            try:
+                return _dt.datetime.fromtimestamp(float(v), tz=_dt.timezone.utc)
+            except Exception:
+                continue
+        # ISO string
+        if isinstance(v, str):
+            dt = _parse_iso_z(v)
+            if dt is not None:
+                return dt
+    return None
 
 def _find_sniper_trace_v1(trace: Any) -> Optional[Dict[str, Any]]:
     if not isinstance(trace, dict):
@@ -110,5 +150,51 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
         _add_check(checks, "contradiction", False, "YELLOW", "contradictory_sources")
         return VerdictResult("YELLOW", "contradiction:contradictory_sources", checks)
     _add_check(checks, "contradiction", True, "GREEN", "ok")
+
+    # 4) Outdated sources (best-effort). Only downgrade when we can parse mtimes.
+    now_dt = _parse_iso_z(_as_str(sniper_v1.get("timestamp")))
+    if now_dt is None:
+        now_dt = _dt.datetime.now(_dt.timezone.utc)
+
+    parsed: List[Dict[str, Any]] = []
+    if isinstance(sources, list):
+        for src in sources:
+            if not isinstance(src, dict):
+                continue
+            mdt = _parse_source_mtime(src)
+            if mdt is None:
+                continue
+            age_days = int((now_dt - mdt).total_seconds() // 86400)
+            parsed.append(
+                {
+                    "source_id": _as_str(src.get("source_id")),
+                    "page_ref": _as_str(src.get("page_ref")),
+                    "age_days": age_days,
+                }
+            )
+
+    # Flag only very old sources to avoid spurious yellows on stable statutes.
+    max_age = 730
+    offenders = [p for p in parsed if p.get("age_days", 0) > max_age]
+    if offenders:
+        offenders_sorted = sorted(offenders, key=lambda x: int(x.get("age_days", 0)), reverse=True)
+        _add_check(
+            checks,
+            "outdated_sources",
+            False,
+            "YELLOW",
+            "source_mtime_too_old",
+            details={"max_age_days": max_age, "offenders": offenders_sorted[:5]},
+        )
+        return VerdictResult("YELLOW", "outdated_sources:source_mtime_too_old", checks)
+
+    _add_check(
+        checks,
+        "outdated_sources",
+        True,
+        "GREEN",
+        "ok" if parsed else "no_parseable_mtime",
+        details={"max_age_days": max_age, "checked": len(parsed)},
+    )
 
     return VerdictResult("GREEN", "all_checks_passed", checks)
