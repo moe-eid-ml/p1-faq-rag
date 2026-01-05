@@ -41,19 +41,38 @@ def _find_sniper_trace_v1(trace: Any) -> Optional[Dict[str, Any]]:
         return t["sniper_trace_v1"]
     return None
 
+def _add_check(
+    checks: List[Dict[str, Any]],
+    check: str,
+    ok: bool,
+    severity: str,
+    reason: str,
+    details: Optional[Dict[str, Any]] = None,
+) -> None:
+    item: Dict[str, Any] = {
+        "check": check,
+        "ok": bool(ok),
+        "severity": severity,
+        "reason": reason,
+    }
+    if details is not None:
+        item["details"] = details
+    checks.append(item)
+
 def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
     checks: List[Dict[str, Any]] = []
 
     if not isinstance(trace, dict):
-        return VerdictResult("YELLOW", "malformed_trace", [{"check": "input", "ok": False, "severity": "YELLOW"}])
+        _add_check(checks, "input", False, "YELLOW", "malformed_trace")
+        return VerdictResult("YELLOW", "malformed_trace", checks)
 
     sniper_v1 = _find_sniper_trace_v1(trace)
 
     # 1) Provenance gate
     if sniper_v1 is None:
-        checks.append({"check": "provenance", "ok": False, "severity": "YELLOW", "reason": "missing_sniper_trace_v1"})
+        _add_check(checks, "provenance", False, "YELLOW", "missing_sniper_trace_v1")
         return VerdictResult("YELLOW", "provenance:missing_sniper_trace_v1", checks)
-    checks.append({"check": "provenance", "ok": True, "severity": "GREEN", "reason": "ok"})
+    _add_check(checks, "provenance", True, "GREEN", "ok")
 
     # 2) Injection scan (very cheap heuristic, upgrade later)
     sources = sniper_v1.get("sources", [])
@@ -69,15 +88,16 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
 
     hits = [t for t in _INJECTION_TOKENS if t in combined]
     if hits:
-        checks.append(
-            {
-                "passed": False,
-                "reason": "prompt_injection_detected",
-                "details": {"hits": hits},
-            }
+        _add_check(
+            checks,
+            "injection",
+            False,
+            "RED",
+            "prompt_injection_detected",
+            details={"hits": hits},
         )
         return VerdictResult("RED", "injection:prompt_injection_detected", checks)
-    checks.append({"check": "injection", "ok": True, "severity": "GREEN", "reason": "ok"})
+    _add_check(checks, "injection", True, "GREEN", "ok")
 
     # 3) Contradiction stub (treat explicit flags as YELLOW)
     flags = [
@@ -87,8 +107,8 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
     ]
     has_conflict = (flags[0] is True) or (flags[1] is True) or (isinstance(flags[2], list) and len(flags[2]) > 0)
     if has_conflict:
-        checks.append({"check": "contradiction", "ok": False, "severity": "YELLOW", "reason": "contradictory_sources"})
+        _add_check(checks, "contradiction", False, "YELLOW", "contradictory_sources")
         return VerdictResult("YELLOW", "contradiction:contradictory_sources", checks)
-    checks.append({"check": "contradiction", "ok": True, "severity": "GREEN", "reason": "ok"})
+    _add_check(checks, "contradiction", True, "GREEN", "ok")
 
     return VerdictResult("GREEN", "all_checks_passed", checks)
