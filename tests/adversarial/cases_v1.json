@@ -62,5 +62,21 @@
     "expected_verdict": "YELLOW",
     "expected_reason_contains": ["year_not_in_evidence", "future"],
     "requires_harness": false
+  },
+  {
+    "id": "ADV-009",
+    "title": "Deadline question without evidence",
+    "query": "Was ist die Frist für Widerspruch gegen einen Bescheid?",
+    "expected_verdict": "YELLOW",
+    "expected_reason_contains": ["cannot verify", "insufficient evidence", "no results"],
+    "requires_harness": false
+  },
+  {
+    "id": "ADV-010",
+    "title": "Sanction hearing deadline (Frist)",
+    "query": "Ich habe eine Anhörung zur Sanktion bekommen. Welche Frist gilt?",
+    "expected_verdict": "YELLOW",
+    "expected_reason_contains": ["cannot verify", "insufficient evidence", "no results"],
+    "requires_harness": false
   }
 ]
