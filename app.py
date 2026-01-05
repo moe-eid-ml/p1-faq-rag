@@ -152,7 +152,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
     if not query.strip():
         if trace:
             trace_id = str(uuid.uuid4())
-            ts = _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            ts = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
             pipeline_version = os.getenv("GITHUB_SHA") or os.getenv("SNIPER_PIPELINE_VERSION") or "dev"
 
             sniper_trace_v1 = {
@@ -348,7 +348,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
     if not top:
         if trace:
             trace_id = str(uuid.uuid4())
-            ts = _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            ts = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
             pipeline_version = os.getenv("GITHUB_SHA") or os.getenv("SNIPER_PIPELINE_VERSION") or "dev"
 
             sniper_trace_v1 = {
