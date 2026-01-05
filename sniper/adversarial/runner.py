@@ -62,6 +62,8 @@ def run_case(case: AdversarialCase, answer_fn: Optional[AnswerFn] = None) -> Dic
             "details": {
                 "title": case.title,
                 "requires_harness": case.requires_harness,
+                "expected_verdict": case.expected_verdict,
+                "expected_reason_contains": list(case.expected_reason_contains),
             },
         }
 
@@ -75,6 +77,8 @@ def run_case(case: AdversarialCase, answer_fn: Optional[AnswerFn] = None) -> Dic
         "details": {
             "title": case.title,
             "requires_harness": case.requires_harness,
+            "expected_verdict": case.expected_verdict,
+            "expected_reason_contains": list(case.expected_reason_contains),
         },
     }
 
