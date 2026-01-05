@@ -39,3 +39,7 @@ __pycache__/
 # Python
 __pycache__/
 *.py[cod]
+
+# local snapshots
+state.txt
+snapshot.sh
