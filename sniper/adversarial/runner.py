@@ -96,3 +96,20 @@ def run_all(
             continue
         results.append(run_case(c, answer_fn=answer_fn))
     return results
+
+
+def summarize_results(results: List[Dict]) -> Dict:
+    """Return a small summary dict for CI / reporting."""
+    counts = {"GREEN": 0, "YELLOW": 0, "RED": 0}
+    for r in results:
+        v = r.get("verdict", "YELLOW")
+        if v not in counts:
+            v = "YELLOW"
+        counts[v] += 1
+
+    return {
+        "total": len(results),
+        "num_green": counts["GREEN"],
+        "num_yellow": counts["YELLOW"],
+        "num_red": counts["RED"],
+    }
