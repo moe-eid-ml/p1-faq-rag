@@ -128,7 +128,13 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
     combined = "\n".join(hay).lower()
 
     # Temporal guard: future-year queries are inherently unverifiable.
-    q_text = _as_str(sniper_v1.get("query"))
+    q_text = _as_str(
+        sniper_v1.get("query")
+        or trace.get("query")
+        or trace.get("q")
+        or trace.get("question")
+        or trace.get("prompt")
+    )
     yrs = re.findall(r"\b(?:19|20)\d{2}\b", q_text)
     if yrs:
         now_year = _dt.datetime.now(_dt.timezone.utc).year
@@ -167,6 +173,10 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
     # If Phase B doesn't provide a helpful reason, infer a stable hint for tests/UX.
     if (not b_reason_raw) or (b_reason_raw == "all_checks_passed"):
         b_reason_pretty = "no results" if not sources else "insufficient evidence"
+
+    # Normalize common Phase B reasons into stable UX/test-friendly phrases.
+    if b_reason_raw == "phase_b_provenance_emission_only":
+        b_reason_pretty = "no results"
 
     if b_verdict and b_verdict != "GREEN":
         _add_check(
