@@ -32,19 +32,30 @@ def answer_fn(query: str) -> Dict:
     except Exception:
         trace = {}
 
+    # Phase A policy: STUBBED adapter.
+    # Rationale: RAG1 can return an answer string and a trace, but it does not yet
+    # guarantee per-claim evidence binding in the Sniper provenance format.
+    # To prevent accidental FALSE GREENs, we default to YELLOW until Sniper checkers
+    # + provenance emission are implemented.
+
     clarify = bool(trace.get("clarify"))
     abstained = bool(trace.get("abstained"))
     abstain_reason = trace.get("abstain_reason", "") or ""
 
-    # Minimal verdict mapping for v1:
-    # - clarify or abstain => YELLOW
-    # - otherwise GREEN
-    verdict = "YELLOW" if (clarify or abstained) else "GREEN"
+    verdict = "YELLOW"
+
+    # Prefer the most specific reason we have.
+    if clarify:
+        reason = "clarify"
+    elif abstained:
+        reason = f"abstain:{abstain_reason}" if abstain_reason else "abstain"
+    else:
+        reason = "stubbed_adapter_no_provenance_yet"
 
     return {
         "query": query,
         "verdict": verdict,
-        "reason": "clarify" if clarify else ("abstain:" + abstain_reason if abstained else "sourced_answer"),
+        "reason": reason,
         "answer": ans,
         "sources_md": srcs,
         "trace": trace,
