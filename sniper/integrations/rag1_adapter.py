@@ -32,25 +32,34 @@ def answer_fn(query: str) -> Dict:
     except Exception:
         trace = {}
 
-    # Phase A policy: STUBBED adapter.
-    # Rationale: RAG1 can return an answer string and a trace, but it does not yet
-    # guarantee per-claim evidence binding in the Sniper provenance format.
-    # To prevent accidental FALSE GREENs, we default to YELLOW until Sniper checkers
-    # + provenance emission are implemented.
+    # Phase B policy: consume Sniper-compatible trace if present.
+    # Rationale: `app.answer(..., trace=True)` now emits `sniper_trace_v1`.
+    # The adapter should treat that as the source of truth for verdicting and reasons.
+    sniper = trace.get("sniper_trace_v1") if isinstance(trace, dict) else None
 
-    clarify = bool(trace.get("clarify"))
-    abstained = bool(trace.get("abstained"))
-    abstain_reason = trace.get("abstain_reason", "") or ""
+    if isinstance(sniper, dict) and sniper:
+        verdict = str(sniper.get("verdict", "YELLOW") or "YELLOW").upper()
+        if verdict not in {"GREEN", "YELLOW", "RED"}:
+            verdict = "YELLOW"
 
-    verdict = "YELLOW"
-
-    # Prefer the most specific reason we have.
-    if clarify:
-        reason = "clarify"
-    elif abstained:
-        reason = f"abstain:{abstain_reason}" if abstain_reason else "abstain"
+        reason = (
+            sniper.get("verdict_reason")
+            or sniper.get("reason")
+            or "missing_verdict_reason"
+        )
     else:
-        reason = "stubbed_adapter_no_provenance_yet"
+        # Backwards-compatible fallback (older traces).
+        clarify = bool(trace.get("clarify"))
+        abstained = bool(trace.get("abstained"))
+        abstain_reason = trace.get("abstain_reason", "") or ""
+
+        verdict = "YELLOW"
+        if clarify:
+            reason = "clarify"
+        elif abstained:
+            reason = f"abstain:{abstain_reason}" if abstain_reason else "abstain"
+        else:
+            reason = "stubbed_adapter_no_sniper_trace"
 
     return {
         "query": query,
