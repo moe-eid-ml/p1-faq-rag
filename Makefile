@@ -2,7 +2,7 @@
 K ?= 3
 INCLUDE ?= wohngeld
 
-.PHONY: run test smoke eval lint lint-fix ci prepush space-push
+.PHONY: run test smoke eval lint lint-fix ci adversarial prepush space-push
 
 run:
 	python app.py
@@ -23,6 +23,9 @@ lint-fix:
 	ruff check . --fix
 
 ci: lint test
+
+adversarial:
+	PYTHONPATH=. pytest -q tests/adversarial/test_runner_with_rag1_adapter.py
 
 prepush: ci
 	@if [ -n "$$(git status --porcelain)" ]; then \
