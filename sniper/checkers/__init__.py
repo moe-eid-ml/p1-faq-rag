@@ -174,9 +174,14 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
     if (not b_reason_raw) or (b_reason_raw == "all_checks_passed"):
         b_reason_pretty = "no results" if not sources else "insufficient evidence"
 
+
     # Normalize common Phase B reasons into stable UX/test-friendly phrases.
     if b_reason_raw == "phase_b_provenance_emission_only":
         b_reason_pretty = "no results"
+
+    # Treat abstains as unverifiable / insufficient evidence (test + UX stable wording).
+    if b_reason_raw.startswith("abstain:") or b_reason_raw.startswith("abstain"):
+        b_reason_pretty = "cannot verify:insufficient evidence"
 
     if b_verdict and b_verdict != "GREEN":
         _add_check(
