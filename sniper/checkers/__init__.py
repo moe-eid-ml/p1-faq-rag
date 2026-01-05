@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import datetime as _dt
+import re
 from typing import Any, Dict, List, Optional
 
 
@@ -125,6 +126,38 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
                 hay.append(_as_str(s.get("page_ref")))
     hay.append(_as_str(sniper_v1.get("answer")))
     combined = "\n".join(hay).lower()
+
+    # Temporal guard: future-year queries are inherently unverifiable.
+    q_text = _as_str(sniper_v1.get("query"))
+    yrs = re.findall(r"\b(?:19|20)\d{2}\b", q_text)
+    if yrs:
+        now_year = _dt.datetime.now(_dt.timezone.utc).year
+        future_years = sorted({int(y) for y in yrs if int(y) > now_year})
+        if future_years:
+            missing = [str(y) for y in future_years if str(y) not in combined]
+            if missing:
+                _add_check(
+                    checks,
+                    "temporal",
+                    False,
+                    "YELLOW",
+                    "year_not_in_evidence",
+                    details={"years": missing, "kind": "future"},
+                )
+                return VerdictResult(
+                    "YELLOW",
+                    f"future:cannot verify:year_not_in_evidence:{','.join(missing)}",
+                    checks,
+                )
+            _add_check(
+                checks,
+                "temporal",
+                False,
+                "YELLOW",
+                "future_year_in_query",
+                details={"years": [str(y) for y in future_years], "kind": "future"},
+            )
+            return VerdictResult("YELLOW", "future:cannot verify", checks)
 
     hits = [t for t in _INJECTION_TOKENS if t in combined]
     if hits:
