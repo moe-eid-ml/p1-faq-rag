@@ -52,12 +52,26 @@ AnswerFn = Callable[[str], Dict]
 def run_case(case: AdversarialCase, answer_fn: Optional[AnswerFn] = None) -> Dict:
     """
     Returns a stable result record.
-    Real implementation will call answer_fn and apply Sniper gates/checkers.
+    If answer_fn is provided, we call it and map to {id, verdict, reason, details}.
     """
+    if answer_fn is None:
+        return {
+            "id": case.id,
+            "verdict": "YELLOW",
+            "reason": "runner_not_implemented",
+            "details": {
+                "title": case.title,
+                "requires_harness": case.requires_harness,
+            },
+        }
+
+    out = answer_fn(case.query) or {}
+    verdict = out.get("verdict", "YELLOW")
+    reason = out.get("reason", "missing_reason")
     return {
         "id": case.id,
-        "verdict": "YELLOW",
-        "reason": "runner_not_implemented",
+        "verdict": verdict,
+        "reason": reason,
         "details": {
             "title": case.title,
             "requires_harness": case.requires_harness,
