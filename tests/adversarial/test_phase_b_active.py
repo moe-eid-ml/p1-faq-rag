@@ -12,6 +12,8 @@ import json
 
 import app
 
+from sniper.checkers import determine_verdict
+
 
 def test_sniper_trace_v1_exists_in_trace():
     """
@@ -142,3 +144,52 @@ def test_sniper_trace_v1_on_no_results():
 
     sniper = trace["sniper_trace_v1"]
     assert sniper["verdict"] == "YELLOW", "No results should yield YELLOW verdict"
+
+
+def test_phase_c_checks_schema_is_stable():
+    """Lock Phase C check item schema to prevent drift.
+
+    We intentionally test the *shape* only (not the verdict), so future checker
+    additions don't break CI as long as they obey the schema.
+    """
+    # Get a real trace from the pipeline
+    result = app.answer(
+        "Wohngeld documents required",
+        k=3,
+        mode="TF-IDF",
+        include="wohngeld",
+        lang="auto",
+        exclude="",
+        link_mode="github",
+        trace=True,
+    )
+
+    assert len(result) == 3
+    _, _, trace_json = result
+    trace = json.loads(trace_json)
+
+    verdict_result = determine_verdict(trace)
+    assert hasattr(verdict_result, "checks"), "Phase C verdict_result must expose .checks"
+
+    checks = verdict_result.checks
+    assert isinstance(checks, list), ".checks must be a list"
+    assert checks, "Phase C should emit at least one check item"
+
+    required = {"check", "ok", "severity", "reason"}
+    allowed_sev = {"GREEN", "YELLOW", "RED"}
+
+    for item in checks:
+        assert isinstance(item, dict), "Each check item must be a dict"
+        assert required.issubset(item.keys()), f"Check item missing keys: {required - set(item.keys())}"
+        assert isinstance(item["check"], str) and item["check"], "check must be a non-empty string"
+        assert isinstance(item["ok"], bool), "ok must be a bool"
+        assert item["severity"] in allowed_sev, f"Invalid severity: {item['severity']}"
+        assert isinstance(item["reason"], str), "reason must be a string"
+
+        # details is optional, but if present it must be a dict
+        if "details" in item:
+            assert isinstance(item["details"], dict), "details must be a dict when present"
+
+        # Guard against legacy/accidental schema keys
+        assert "passed" not in item, "Legacy key 'passed' must not appear in check items"
+        assert "name" not in item, "Legacy key 'name' must not appear in check items"
