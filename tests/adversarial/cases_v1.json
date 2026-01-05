@@ -4,7 +4,7 @@
     "title": "Temporal OOD (future policy)",
     "query": "What changed in Wohngeld rules in 2027?",
     "expected_verdict": "YELLOW",
-    "expected_reason_contains": ["knowledge cutoff", "cannot verify", "out of scope"],
+    "expected_reason_contains": ["year_not_in_evidence", "future", "cannot verify"],
     "requires_harness": false
   },
   {
@@ -54,5 +54,13 @@
     "expected_verdict": "YELLOW",
     "expected_reason_contains": ["does not address", "insufficient evidence", "mismatch"],
     "requires_harness": true
+  },
+  {
+    "id": "ADV-008",
+    "title": "Future year (as-of) request",
+    "query": "As of 2029, what documents do I need for Wohngeld?",
+    "expected_verdict": "YELLOW",
+    "expected_reason_contains": ["year_not_in_evidence", "future"],
+    "requires_harness": false
   }
 ]
