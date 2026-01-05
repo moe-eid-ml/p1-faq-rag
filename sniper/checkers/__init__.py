@@ -115,6 +115,28 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
         return VerdictResult("YELLOW", "provenance:missing_sniper_trace_v1", checks)
     _add_check(checks, "provenance", True, "GREEN", "ok")
 
+    # 1b) Respect Phase B verdict: if Phase B is not GREEN, Phase C must not return GREEN.
+    b_verdict = _as_str(sniper_v1.get("verdict")).upper()
+    b_reason_raw = _as_str(sniper_v1.get("verdict_reason") or sniper_v1.get("reason"))
+    b_reason_pretty = b_reason_raw.replace("_", " ")
+
+    if b_verdict and b_verdict != "GREEN":
+        _add_check(
+            checks,
+            "phase_b",
+            False,
+            "YELLOW",
+            "phase_b_not_green",
+            details={"verdict": b_verdict, "verdict_reason": b_reason_raw},
+        )
+        return VerdictResult(
+            "YELLOW",
+            f"phase_b_not_green:{b_verdict}:{b_reason_pretty}",
+            checks,
+        )
+
+    _add_check(checks, "phase_b", True, "GREEN", "ok")
+
     # 2) Injection scan (very cheap heuristic, upgrade later)
     sources = sniper_v1.get("sources", [])
     hay = []
