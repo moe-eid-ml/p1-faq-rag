@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProvenanceTrace_v1",
+  "type": "object",
+  "required": ["trace_id", "timestamp", "query", "verdict", "sources"],
+  "properties": {
+    "trace_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique ID for audit trail"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "query": {
+      "type": "string",
+      "description": "Verbatim user input"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["GREEN", "YELLOW", "RED"],
+      "description": "GREEN=sourced, YELLOW=partial/abstain, RED=refused"
+    },
+    "verdict_reason": {
+      "type": "string",
+      "description": "Human-readable justification for non-GREEN"
+    },
+    "answer": {
+      "type": ["string", "null"],
+      "description": "Generated response (null if RED)"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "chunk_hash", "retrieval_score"],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "description": "Document identifier"
+          },
+          "chunk_hash": {
+            "type": "string",
+            "description": "SHA256 of retrieved chunk for integrity"
+          },
+          "chunk_text": {
+            "type": "string",
+            "description": "Verbatim retrieved passage"
+          },
+          "retrieval_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "page_ref": {
+            "type": ["string", "null"],
+            "description": "Page/section locator if available"
+          }
+        }
+      },
+      "minItems": 0
+    },
+    "model_version": {
+      "type": "string",
+      "description": "LLM identifier for reproducibility"
+    },
+    "pipeline_version": {
+      "type": "string",
+      "description": "Git SHA or semver of this codebase"
+    }
+  }
+}
