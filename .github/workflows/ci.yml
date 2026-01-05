@@ -32,3 +32,6 @@ jobs:
 
       - name: Run tests
         run: pytest -q
+
+      - name: Adversarial harness
+        run: make adversarial
