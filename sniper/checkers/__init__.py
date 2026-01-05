@@ -69,7 +69,13 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
 
     hits = [t for t in _INJECTION_TOKENS if t in combined]
     if hits:
-        checks.append({"check": "injection", "ok": False, "severity": "RED", "reason": "prompt_injection_detected", "details": {"hits": hits}})
+        checks.append(
+            {
+                "passed": False,
+                "reason": "prompt_injection_detected",
+                "details": {"hits": hits},
+            }
+        )
         return VerdictResult("RED", "injection:prompt_injection_detected", checks)
     checks.append({"check": "injection", "ok": True, "severity": "GREEN", "reason": "ok"})
 
