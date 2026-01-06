@@ -1,0 +1,26 @@
+{
+  "version": "v0",
+  "notes": "Matcher-only: phrases suggest candidate passages; checkers decide verdicts.",
+  "buckets": [
+    {
+      "bucket_id": "IT_SERVICES",
+      "cpv_prefixes": ["72"],
+      "phrases": [
+        { "tag": "data_residency", "pattern": "Datenhaltung", "explicit_only": true },
+        { "tag": "data_residency", "pattern": "Datenverarbeitung.*(Deutschland|EU|Europa)", "explicit_only": true },
+        { "tag": "cert_required", "pattern": "ISO\\s*27001", "explicit_only": true },
+        { "tag": "cert_required", "pattern": "BSI\\s*C5", "explicit_only": true }
+      ]
+    },
+    {
+      "bucket_id": "GENERAL",
+      "cpv_prefixes": [],
+      "phrases": [
+        { "tag": "turnover", "pattern": "Mindestumsatz", "explicit_only": true },
+        { "tag": "cert_required", "pattern": "Nachweis", "explicit_only": false },
+        { "tag": "mandatory", "pattern": "ist\\s+zwingend", "explicit_only": true },
+        { "tag": "exclusion", "pattern": "Ausschlusskriterium", "explicit_only": true }
+      ]
+    }
+  ]
+}
