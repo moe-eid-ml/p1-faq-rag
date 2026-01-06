@@ -78,5 +78,13 @@
     "expected_verdict": "YELLOW",
     "expected_reason_contains": ["cannot verify", "insufficient evidence", "no results"],
     "requires_harness": false
+  },
+  {
+    "id": "ADV-011",
+    "title": "Ambiguous Date (01.02.24) must not be guessed",
+    "query": "Sie haben die Möglichkeit, sich bis zum 01.02.24 zu äußern.",
+    "expected_verdict": "YELLOW",
+    "expected_reason_contains": ["cannot verify", "insufficient evidence", "no results"],
+    "requires_harness": false
   }
 ]
