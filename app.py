@@ -8,11 +8,32 @@ import hashlib
 import uuid
 
 
+
 # Gradio is optional: tests/CI import this module without needing the UI.
 try:
     import gradio as gr
 except Exception:
     gr = None
+
+# --- KOSniper demo (safe lazy import to avoid breaking environments without kosniper deps) ---
+
+def _kosniper_run_single_page(text: str, doc_id: str = "demo.pdf", page_number: int = 1) -> dict:
+    """Run the minimal KOSniper skeleton on a single page of plain text.
+
+    Returns a JSON-serializable dict for Gradio.
+    """
+    try:
+        from kosniper.pipeline import run_single_page  # local import by design
+        out = run_single_page(text=text, doc_id=doc_id, page_number=page_number)
+        # pydantic models -> dict
+        return out.model_dump() if hasattr(out, "model_dump") else out.dict()
+    except Exception as e:
+        return {
+            "overall": "abstain",
+            "summary": "KOSniper demo unavailable (import/runtime error).",
+            "error": f"{type(e).__name__}: {e}",
+            "results": [],
+        }
 
 from tfidf import TfidfRetriever
 import datetime as _dt
@@ -82,8 +103,16 @@ def _init_embeddings():
 
     If `sentence_transformers` isn't installed, keep semantic disabled and allow
     TF-IDF-only operation (tests + basic usage).
+
+    CI guardrail: when `DISABLE_SEMANTIC=1`, never attempt to load/download
+    SentenceTransformer model weights.
     """
     global embedder, doc_embeddings, _semantic_ready
+
+    if os.getenv("DISABLE_SEMANTIC", "") == "1":
+        _semantic_ready = False
+        return
+
     if _semantic_ready:
         return
 
@@ -780,73 +809,104 @@ def build_demo():
             "[GitHub](https://github.com/moe-eid-ml/p1-faq-rag) · "
             "[Hugging Face Space](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)"
         )
-        with gr.Row():
-            q = gr.Textbox(
-                label="Your question",
-                lines=4,
-                scale=3,
-                placeholder="Ask in English, Deutsch, or العربية (if asked to clarify, reply with 1-4 + optional context)",
-            )
-            k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
-            mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="TF-IDF", label="Retrieval mode")
-            include = gr.Textbox(
-                label="Include filenames (comma-separated, optional)",
-                placeholder="e.g. wohngeld, faq",
-                value="wohngeld",
-                scale=1,
-            )
-            exclude = gr.Textbox(
-                label="Exclude filenames (comma-separated, optional)",
-                placeholder="e.g. pdf, bescheid, scan",
-                value="",
-                scale=1,
-            )
-            lang = gr.Dropdown(
-                label="Language (override)",
-                choices=["auto", "de", "en", "ar"],
-                value="auto",
-                scale=1,
-            )
-            link_mode = gr.Radio(
-                label="Source links",
-                choices=["github", "local"],
-                value="github",
-                scale=1,
-            )
-            show_trace = gr.Checkbox(label="Show trace", value=False, scale=1)
-        with gr.Row():
-            sample = gr.Dropdown(
-                label="Sample question",
-                choices=[
-                    "Welche Unterlagen brauche ich für den Wohngeldantrag?",
-                    "Wo stelle ich den Wohngeldantrag in meiner Stadt?",
-                    "Wie lange dauert die Bearbeitung vom Wohngeld?",
-                    "Wie wird die Höhe des Wohngelds berechnet?",
-                    "Wann sollte ich den Weiterleistungsantrag stellen?",
-                ],
-                value=None,
-                scale=3,
-            )
-        ans = gr.Textbox(label="Answer", lines=16, interactive=True, show_copy_button=True, elem_id="answer_box")
-        src = gr.Markdown(label="Top sources", elem_id="source_box")
-        tr = gr.Textbox(label="Trace (JSON)", lines=10, interactive=True, show_copy_button=True)
+        with gr.Tabs():
+            with gr.Tab("Wohngeld FAQ"):
+                with gr.Row():
+                    q = gr.Textbox(
+                        label="Your question",
+                        lines=4,
+                        scale=3,
+                        placeholder="Ask in English, Deutsch, or العربية (if asked to clarify, reply with 1-4 + optional context)",
+                    )
+                    k = gr.Slider(1, 5, step=1, value=3, label="Top-K", scale=1)
+                    mode = gr.Radio(choices=["Semantic","TF-IDF","Hybrid"], value="TF-IDF", label="Retrieval mode")
+                    include = gr.Textbox(
+                        label="Include filenames (comma-separated, optional)",
+                        placeholder="e.g. wohngeld, faq",
+                        value="wohngeld",
+                        scale=1,
+                    )
+                    exclude = gr.Textbox(
+                        label="Exclude filenames (comma-separated, optional)",
+                        placeholder="e.g. pdf, bescheid, scan",
+                        value="",
+                        scale=1,
+                    )
+                    lang = gr.Dropdown(
+                        label="Language (override)",
+                        choices=["auto", "de", "en", "ar"],
+                        value="auto",
+                        scale=1,
+                    )
+                    link_mode = gr.Radio(
+                        label="Source links",
+                        choices=["github", "local"],
+                        value="github",
+                        scale=1,
+                    )
+                    show_trace = gr.Checkbox(label="Show trace", value=False, scale=1)
+                with gr.Row():
+                    sample = gr.Dropdown(
+                        label="Sample question",
+                        choices=[
+                            "Welche Unterlagen brauche ich für den Wohngeldantrag?",
+                            "Wo stelle ich den Wohngeldantrag in meiner Stadt?",
+                            "Wie lange dauert die Bearbeitung vom Wohngeld?",
+                            "Wie wird die Höhe des Wohngelds berechnet?",
+                            "Wann sollte ich den Weiterleistungsantrag stellen?",
+                        ],
+                        value=None,
+                        scale=3,
+                    )
+                ans = gr.Textbox(label="Answer", lines=16, interactive=True, show_copy_button=True, elem_id="answer_box")
+                src = gr.Markdown(label="Top sources", elem_id="source_box")
+                tr = gr.Textbox(label="Trace (JSON)", lines=10, interactive=True, show_copy_button=True)
 
-        def answer_ui(query, k, mode, include, lang, exclude, link_mode, show_trace):
-            if show_trace:
-                a, s, t = answer(query, k, mode, include, lang, exclude, link_mode, trace=True)
-                return a, s, t
-            a, s = answer(query, k, mode, include, lang, exclude, link_mode, trace=False)
-            return a, s, ""
+                def answer_ui(query, k, mode, include, lang, exclude, link_mode, show_trace):
+                    if show_trace:
+                        a, s, t = answer(query, k, mode, include, lang, exclude, link_mode, trace=True)
+                        return a, s, t
+                    a, s = answer(query, k, mode, include, lang, exclude, link_mode, trace=False)
+                    return a, s, ""
 
-        go = gr.Button("Search")
-        go.click(answer_ui, [q, k, mode, include, lang, exclude, link_mode, show_trace], [ans, src, tr])
-        sample.change(_fill_q, [sample], [q])
-        reset = gr.Button("Reset filters")
-        reset.click(_reset_defaults, [], [k, mode, include, exclude, lang, link_mode])
-        with gr.Row():
-            ebtn = gr.Button("Evaluate (P@K / R@K)")
-            emd = gr.Markdown()
-            ebtn.click(eval_ui, [k, include, lang], [emd])
+                go = gr.Button("Search")
+                go.click(answer_ui, [q, k, mode, include, lang, exclude, link_mode, show_trace], [ans, src, tr])
+                sample.change(_fill_q, [sample], [q])
+                reset = gr.Button("Reset filters")
+                reset.click(_reset_defaults, [], [k, mode, include, exclude, lang, link_mode])
+                with gr.Row():
+                    ebtn = gr.Button("Evaluate (P@K / R@K)")
+                    emd = gr.Markdown()
+                    ebtn.click(eval_ui, [k, include, lang], [emd])
+
+            with gr.Tab("KOSniper (Demo)"):
+                gr.Markdown(
+                    """### KOSniper (Demo)
+
+Proof-first KO scanning skeleton (matcher-only). This demo runs on **plain text** for now (PDF extraction/OCR comes later).
+
+- **Green** here only means: *no KO signal found by the demo checker* (not a guarantee).
+- **Yellow** means: *a KO-like phrase was found; verify the evidence manually.*
+
+"""
+                )
+
+                kos_text = gr.Textbox(
+                    label="Paste one page of tender text (plain text)",
+                    lines=12,
+                    value="Dies ist ein Ausschlusskriterium laut Unterlage.",
+                )
+                kos_doc_id = gr.Textbox(label="doc_id", value="demo.pdf")
+                kos_page = gr.Number(label="page_number", value=1, precision=0)
+
+                kos_btn = gr.Button("Run KOSniper demo")
+                kos_out = gr.JSON(label="KOSniper result")
+
+                kos_btn.click(
+                    fn=_kosniper_run_single_page,
+                    inputs=[kos_text, kos_doc_id, kos_page],
+                    outputs=[kos_out],
+                )
 
     return demo
 

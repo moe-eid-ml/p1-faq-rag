@@ -7,6 +7,8 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      DISABLE_SEMANTIC: "1"
     steps:
       - uses: actions/checkout@v4
 
