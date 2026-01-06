@@ -43,3 +43,4 @@ __pycache__/
 # local snapshots
 state.txt
 snapshot.sh
+data/kosniper/goldset_v0/raw_local/

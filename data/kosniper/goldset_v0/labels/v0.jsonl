@@ -1,0 +1,1 @@
+{"case_id":"A01_p1_ko_phrase_001","doc_id":"a01_bewerbungsbedingungen.pdf","page_number":1,"text_hint":"Ausschlusskriterium","expected":{"overall":"yellow","checker_hits":["MinimalKoPhraseChecker"]}}
