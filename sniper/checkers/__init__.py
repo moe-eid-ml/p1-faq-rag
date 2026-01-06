@@ -165,6 +165,53 @@ def determine_verdict(trace: Dict[str, Any]) -> VerdictResult:
             )
             return VerdictResult("YELLOW", "future:cannot verify", checks)
 
+    # Deadline/Frist guard (downgrade-only): if the user asks about a deadline but
+    # we can't find any date or duration in evidence text, we must not pretend.
+    q_low = q_text.lower()
+    asks_deadline = any(
+        k in q_low
+        for k in (
+            "frist",
+            "deadline",
+            "widerspruch",
+            "anhörung",
+            "sanktion",
+            "minderung",
+        )
+    )
+
+    if asks_deadline:
+        # Common date formats + German duration phrasing.
+        has_date = bool(
+            re.search(
+                r"\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b",
+                combined,
+            )
+        )
+        has_duration = bool(
+            re.search(
+                r"\b\d{1,3}\s*(tage|tag|wochen|woche|monate|monat|jahre|jahr)\b|\b(ein|eine|einen)\s+(monat|woche|tag|jahr)\b",
+                combined,
+            )
+        )
+
+        if not (has_date or has_duration):
+            _add_check(
+                checks,
+                "deadline",
+                False,
+                "YELLOW",
+                "deadline_not_in_evidence",
+                details={"kind": "frist", "query": q_text[:120]},
+            )
+            return VerdictResult(
+                "YELLOW",
+                "deadline:cannot verify:insufficient evidence",
+                checks,
+            )
+
+        _add_check(checks, "deadline", True, "GREEN", "evidence_contains_date_or_duration")
+
     # 1b) Respect Phase B verdict: if Phase B is not GREEN, Phase C must not return GREEN.
     b_verdict = _as_str(sniper_v1.get("verdict")).upper()
     b_reason_raw = _as_str(sniper_v1.get("verdict_reason") or sniper_v1.get("reason"))
