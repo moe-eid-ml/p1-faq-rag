@@ -79,8 +79,8 @@ class TestNoPhrase:
             doc_id="doc.pdf",
             page_number=1,
         )
-        assert result.status != TrafficLight.YELLOW
-        assert len(result.evidence) == 0
+        # No phrase match -> None (zero findings)
+        assert result is None
 
     def test_unrelated_text_returns_zero_findings(self, checker):
         result = checker.run(
@@ -88,8 +88,8 @@ class TestNoPhrase:
             doc_id="doc.pdf",
             page_number=1,
         )
-        assert result.status != TrafficLight.YELLOW
-        assert len(result.evidence) == 0
+        # No phrase match -> None (zero findings)
+        assert result is None
 
 
 class TestHyphenation:
