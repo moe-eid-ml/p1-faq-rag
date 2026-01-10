@@ -1,6 +1,5 @@
 """MC-KOS-04: Tests for pipeline wiring with both checkers."""
 
-import pytest
 from kosniper.pipeline import run_single_page
 from kosniper.contracts import TrafficLight
 
