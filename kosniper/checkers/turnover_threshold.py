@@ -149,13 +149,9 @@ class TurnoverThresholdChecker:
                         covered_positions.add(kw_start)
                         break  # One value per keyword occurrence
 
-        # De-duplicate by value (same threshold mentioned multiple ways)
-        unique_values = {}
-        for value, snippet, start, end in results:
-            if value not in unique_values:
-                unique_values[value] = (value, snippet, start, end)
-
-        return list(unique_values.values())
+        # Do NOT de-duplicate by value: multiple distinct matches (even with same
+        # numeric value) indicate ambiguous/multiple criteria and should trigger YELLOW.
+        return results
 
     def _has_ambiguity(self, text: str) -> bool:
         """Check if text contains ambiguity triggers."""

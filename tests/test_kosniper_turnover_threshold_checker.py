@@ -237,3 +237,46 @@ class TestEvidenceFormat:
         # Offsets should be None (v0)
         assert ev.start_offset is None
         assert ev.end_offset is None
+
+
+class TestMultiCriteriaRegression:
+    """MC-KOS-03: Avoid false RED on repeated turnover criteria with same value."""
+
+    def test_two_criteria_same_value_yields_yellow(self, checker, company_400k):
+        """Two separate criteria with same value must yield YELLOW, not RED."""
+        text = """
+        Mindestumsatz: 500.000 EUR.
+        Umsatz im relevanten Geschäftsbereich: 500.000 EUR.
+        """
+        result = checker.run(text, "doc.pdf", 1, company_400k)
+        assert result is not None
+        # Must be YELLOW (ambiguous), NOT RED
+        assert result.status == TrafficLight.YELLOW
+        assert result.status != TrafficLight.RED
+        assert "ambiguous" in result.reason
+
+    def test_same_sentence_repeated_yields_yellow(self, checker, company_400k):
+        """Same sentence repeated should be conservative (YELLOW)."""
+        text = """
+        Der Mindestumsatz beträgt 500.000 EUR.
+        Der Mindestumsatz beträgt 500.000 EUR.
+        """
+        result = checker.run(text, "doc.pdf", 1, company_400k)
+        assert result is not None
+        # Conservative: YELLOW for repeated criteria
+        assert result.status == TrafficLight.YELLOW
+        assert result.status != TrafficLight.RED
+
+    def test_single_criterion_still_works(self, checker, company_400k):
+        """Single unambiguous threshold still produces RED if below."""
+        text = "Der Mindestumsatz beträgt 500.000 EUR."
+        result = checker.run(text, "doc.pdf", 1, company_400k)
+        assert result is not None
+        assert result.status == TrafficLight.RED
+        assert result.reason == "below_threshold"
+
+    def test_single_criterion_met_returns_none(self, checker, company_600k):
+        """Single unambiguous threshold still returns None if met."""
+        text = "Der Mindestumsatz beträgt 500.000 EUR."
+        result = checker.run(text, "doc.pdf", 1, company_600k)
+        assert result is None
