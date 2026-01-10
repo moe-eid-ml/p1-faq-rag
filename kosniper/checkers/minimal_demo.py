@@ -1,11 +1,14 @@
 import re
+from typing import Optional
+
 from kosniper.contracts import CheckerResult, EvidenceSpan, TrafficLight
 from kosniper.checkers.base import Checker
+
 
 class MinimalKoPhraseChecker(Checker):
     name = "MinimalKoPhraseChecker"
 
-    def run(self, text: str, doc_id: str, page_number: int) -> CheckerResult:
+    def run(self, text: str, doc_id: str, page_number: int) -> Optional[CheckerResult]:
         m = re.search(r"Ausschlusskriterium", text, flags=re.IGNORECASE)
         if not m:
             return CheckerResult(
