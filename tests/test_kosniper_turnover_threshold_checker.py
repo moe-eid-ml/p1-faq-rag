@@ -1,6 +1,6 @@
 import pytest
 from kosniper.checkers.turnover_threshold import TurnoverThresholdChecker
-from kosniper.contracts import TrafficLight
+from kosniper.contracts import ReasonCode, TrafficLight
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ class TestRedFindings:
         result = checker.run(text, "doc.pdf", 1, company_400k)
         assert result is not None
         assert result.status == TrafficLight.RED
-        assert result.reason == "below_threshold"
+        assert result.reason == ReasonCode.BELOW_THRESHOLD
         assert len(result.evidence) == 1
         assert result.evidence[0].doc_id == "doc.pdf"
         assert result.evidence[0].page_number == 1
@@ -43,7 +43,7 @@ class TestRedFindings:
         result = checker.run(text, "doc.pdf", 1, {"annual_turnover_eur": 1_000_000})
         assert result is not None
         assert result.status == TrafficLight.RED
-        assert result.reason == "below_threshold"
+        assert result.reason == ReasonCode.BELOW_THRESHOLD
 
     def test_euro_symbol_threshold(self, checker, company_400k):
         """€ symbol instead of EUR."""
@@ -91,7 +91,7 @@ class TestYellowAmbiguous:
         result = checker.run(text, "doc.pdf", 1, company_600k)
         assert result is not None
         assert result.status == TrafficLight.YELLOW
-        assert result.reason == "ambiguous_requirement"
+        assert result.reason == ReasonCode.AMBIGUOUS_REQUIREMENT
 
     def test_multi_year_yellow(self, checker, company_600k):
         """Multi-year reference is ambiguous."""
@@ -99,7 +99,7 @@ class TestYellowAmbiguous:
         result = checker.run(text, "doc.pdf", 1, company_600k)
         assert result is not None
         assert result.status == TrafficLight.YELLOW
-        assert result.reason == "ambiguous_requirement"
+        assert result.reason == ReasonCode.AMBIGUOUS_REQUIREMENT
 
     def test_multiple_thresholds_yellow(self, checker, company_400k):
         """Multiple distinct thresholds -> YELLOW."""
@@ -111,7 +111,7 @@ class TestYellowAmbiguous:
         assert result is not None
         assert result.status == TrafficLight.YELLOW
         # Could be ambiguous_requirement or ambiguous_threshold_count
-        assert "ambiguous" in result.reason
+        assert result.reason in {ReasonCode.AMBIGUOUS_REQUIREMENT, ReasonCode.AMBIGUOUS_THRESHOLD_COUNT}
 
     def test_range_yellow(self, checker, company_400k):
         """Range pattern is ambiguous."""
@@ -119,7 +119,7 @@ class TestYellowAmbiguous:
         result = checker.run(text, "doc.pdf", 1, company_400k)
         assert result is not None
         assert result.status == TrafficLight.YELLOW
-        assert result.reason == "ambiguous_requirement"
+        assert result.reason == ReasonCode.AMBIGUOUS_REQUIREMENT
 
 
 class TestYellowMissingData:
@@ -131,7 +131,7 @@ class TestYellowMissingData:
         result = checker.run(text, "doc.pdf", 1, None)
         assert result is not None
         assert result.status == TrafficLight.YELLOW
-        assert result.reason == "missing_company_turnover"
+        assert result.reason == ReasonCode.MISSING_COMPANY_TURNOVER
 
     def test_empty_company_profile(self, checker):
         """Threshold exists but empty profile -> YELLOW."""
@@ -139,7 +139,7 @@ class TestYellowMissingData:
         result = checker.run(text, "doc.pdf", 1, {})
         assert result is not None
         assert result.status == TrafficLight.YELLOW
-        assert result.reason == "missing_company_turnover"
+        assert result.reason == ReasonCode.MISSING_COMPANY_TURNOVER
 
     def test_missing_turnover_field(self, checker):
         """Profile exists but missing turnover field -> YELLOW."""
@@ -147,7 +147,7 @@ class TestYellowMissingData:
         result = checker.run(text, "doc.pdf", 1, {"company_name": "Acme"})
         assert result is not None
         assert result.status == TrafficLight.YELLOW
-        assert result.reason == "missing_company_turnover"
+        assert result.reason == ReasonCode.MISSING_COMPANY_TURNOVER
 
     def test_missing_currency_yellow(self, checker, company_400k):
         """Turnover keyword but no currency marker -> YELLOW."""
@@ -155,7 +155,7 @@ class TestYellowMissingData:
         result = checker.run(text, "doc.pdf", 1, company_400k)
         assert result is not None
         assert result.status == TrafficLight.YELLOW
-        assert result.reason == "missing_currency"
+        assert result.reason == ReasonCode.MISSING_CURRENCY
 
 
 class TestAbstain:
@@ -165,19 +165,19 @@ class TestAbstain:
         result = checker.run("", "doc.pdf", 1, company_400k)
         assert result is not None
         assert result.status == TrafficLight.ABSTAIN
-        assert result.reason == "no_text"
+        assert result.reason == ReasonCode.NO_TEXT
 
     def test_none_text_abstain(self, checker, company_400k):
         result = checker.run(None, "doc.pdf", 1, company_400k)
         assert result is not None
         assert result.status == TrafficLight.ABSTAIN
-        assert result.reason == "no_text"
+        assert result.reason == ReasonCode.NO_TEXT
 
     def test_whitespace_only_abstain(self, checker, company_400k):
         result = checker.run("   \n\t  ", "doc.pdf", 1, company_400k)
         assert result is not None
         assert result.status == TrafficLight.ABSTAIN
-        assert result.reason == "no_text"
+        assert result.reason == ReasonCode.NO_TEXT
 
 
 class TestAdversarial:
@@ -253,7 +253,7 @@ class TestMultiCriteriaRegression:
         # Must be YELLOW (ambiguous), NOT RED
         assert result.status == TrafficLight.YELLOW
         assert result.status != TrafficLight.RED
-        assert "ambiguous" in result.reason
+        assert result.reason in {ReasonCode.AMBIGUOUS_REQUIREMENT, ReasonCode.AMBIGUOUS_THRESHOLD_COUNT}
 
     def test_same_sentence_repeated_yields_yellow(self, checker, company_400k):
         """Same sentence repeated should be conservative (YELLOW)."""
@@ -273,7 +273,7 @@ class TestMultiCriteriaRegression:
         result = checker.run(text, "doc.pdf", 1, company_400k)
         assert result is not None
         assert result.status == TrafficLight.RED
-        assert result.reason == "below_threshold"
+        assert result.reason == ReasonCode.BELOW_THRESHOLD
 
     def test_single_criterion_met_returns_none(self, checker, company_600k):
         """Single unambiguous threshold still returns None if met."""

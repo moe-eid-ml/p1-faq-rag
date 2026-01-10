@@ -3,7 +3,7 @@
 from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
 from kosniper.checkers.turnover_threshold import TurnoverThresholdChecker
 from kosniper.pipeline import run_single_page
-from kosniper.contracts import TrafficLight
+from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
 
 
 def _assert_has_evidence(result):
@@ -39,7 +39,7 @@ def test_red_requires_threshold_and_company_profile():
     missing_profile = checker.run(text, "doc.pdf", 1, company_profile=None)
     assert missing_profile is not None
     assert missing_profile.status == TrafficLight.YELLOW
-    assert missing_profile.reason == "missing_company_turnover"
+    assert missing_profile.reason == ReasonCode.MISSING_COMPANY_TURNOVER
 
     below_threshold = checker.run(
         text,
@@ -61,7 +61,7 @@ def test_ambiguity_forces_yellow_when_multiple_thresholds():
     )
     assert result is not None
     assert result.status == TrafficLight.YELLOW
-    assert result.reason in {"ambiguous_requirement", "ambiguous_threshold_count"}
+    assert result.reason in {ReasonCode.AMBIGUOUS_REQUIREMENT, ReasonCode.AMBIGUOUS_THRESHOLD_COUNT}
 
 
 def test_outputs_are_deterministic():
@@ -74,3 +74,60 @@ def test_outputs_are_deterministic():
     first = run_single_page(*args)
     second = run_single_page(*args)
     assert first == second
+
+
+def test_non_neutral_result_rejects_empty_evidence():
+    """CheckerResult validation: non-neutral status requires non-empty evidence."""
+    import pytest
+
+    # RED with empty evidence should raise
+    with pytest.raises(ValueError, match="requires non-empty evidence"):
+        CheckerResult(
+            checker_name="TestChecker",
+            status=TrafficLight.RED,
+            reason=ReasonCode.BELOW_THRESHOLD,
+            evidence=[],
+        )
+
+    # YELLOW with empty evidence should raise
+    with pytest.raises(ValueError, match="requires non-empty evidence"):
+        CheckerResult(
+            checker_name="TestChecker",
+            status=TrafficLight.YELLOW,
+            reason=ReasonCode.KO_PHRASE_FOUND,
+            evidence=[],
+        )
+
+    # ABSTAIN with empty evidence should raise
+    with pytest.raises(ValueError, match="requires non-empty evidence"):
+        CheckerResult(
+            checker_name="TestChecker",
+            status=TrafficLight.ABSTAIN,
+            reason=ReasonCode.NO_TEXT,
+            evidence=[],
+        )
+
+
+def test_non_neutral_result_rejects_empty_snippet():
+    """CheckerResult validation: non-neutral status requires non-empty snippet."""
+    import pytest
+
+    with pytest.raises(ValueError, match="requires non-empty snippet"):
+        CheckerResult(
+            checker_name="TestChecker",
+            status=TrafficLight.YELLOW,
+            reason=ReasonCode.KO_PHRASE_FOUND,
+            evidence=[
+                EvidenceSpan(doc_id="test.pdf", page_number=1, snippet="")
+            ],
+        )
+
+    with pytest.raises(ValueError, match="requires non-empty snippet"):
+        CheckerResult(
+            checker_name="TestChecker",
+            status=TrafficLight.RED,
+            reason=ReasonCode.BELOW_THRESHOLD,
+            evidence=[
+                EvidenceSpan(doc_id="test.pdf", page_number=1, snippet="   ")
+            ],
+        )
