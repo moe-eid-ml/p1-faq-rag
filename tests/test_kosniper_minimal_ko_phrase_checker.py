@@ -122,16 +122,19 @@ class TestEmptyText:
         result = checker.run(text="", doc_id="doc.pdf", page_number=1)
         assert result.status == TrafficLight.ABSTAIN
         assert result.reason == "no_text"
-        assert len(result.evidence) == 0
+        assert len(result.evidence) == 1
+        assert result.evidence[0].snippet
 
     def test_whitespace_only_returns_abstain(self, checker):
         result = checker.run(text="   \n\t  ", doc_id="doc.pdf", page_number=1)
         assert result.status == TrafficLight.ABSTAIN
         assert result.reason == "no_text"
-        assert len(result.evidence) == 0
+        assert len(result.evidence) == 1
+        assert result.evidence[0].snippet
 
     def test_none_text_returns_abstain(self, checker):
         result = checker.run(text=None, doc_id="doc.pdf", page_number=1)
         assert result.status == TrafficLight.ABSTAIN
         assert result.reason == "no_text"
-        assert len(result.evidence) == 0
+        assert len(result.evidence) == 1
+        assert result.evidence[0].snippet
