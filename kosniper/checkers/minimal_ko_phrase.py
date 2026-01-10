@@ -31,7 +31,7 @@ class MinimalKoPhraseChecker(Checker):
         normalized = re.sub(r"\s+", " ", normalized)
         return normalized.strip()
 
-    def run(self, text: str, doc_id: str, page_number: int) -> CheckerResult:
+    def run(self, text: str, doc_id: str, page_number: int) -> CheckerResult | None:
         normalized = self._normalize(text)
 
         # Stop condition: empty text after normalization -> abstain
@@ -67,10 +67,5 @@ class MinimalKoPhraseChecker(Checker):
                     ],
                 )
 
-        # No phrase matches -> zero findings (ABSTAIN with empty evidence)
-        return CheckerResult(
-            checker_name=self.name,
-            status=TrafficLight.ABSTAIN,
-            reason="No KO phrase detected",
-            evidence=[],
-        )
+        # No phrase matches -> zero findings (None)
+        return None

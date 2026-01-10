@@ -1,7 +1,8 @@
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from kosniper.contracts import CheckerResult, RunResult, TrafficLight
 from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
+from kosniper.checkers.turnover_threshold import TurnoverThresholdChecker
 
 
 def _aggregate_status(results: List[CheckerResult]) -> TrafficLight:
@@ -17,7 +18,12 @@ def _aggregate_status(results: List[CheckerResult]) -> TrafficLight:
     return TrafficLight.GREEN
 
 
-def run_single_page(text: str, doc_id: str = "demo.pdf", page_number: int = 1) -> RunResult:
+def run_single_page(
+    text: Optional[str],
+    doc_id: str = "demo.pdf",
+    page_number: int = 1,
+    company_profile: Optional[Dict[str, Any]] = None,
+) -> RunResult:
     # Guard: empty/None text -> ABSTAIN, never Green
     if text is None or text.strip() == "":
         return RunResult(
@@ -26,9 +32,33 @@ def run_single_page(text: str, doc_id: str = "demo.pdf", page_number: int = 1) -
             results=[],
         )
 
-    checker = MinimalKoPhraseChecker()
-    r = checker.run(text=text, doc_id=doc_id, page_number=page_number)
-    results = [r]
+    results: List[CheckerResult] = []
+
+    # Run MinimalKoPhraseChecker
+    phrase_checker = MinimalKoPhraseChecker()
+    phrase_result = phrase_checker.run(text=text, doc_id=doc_id, page_number=page_number)
+    if phrase_result is not None:
+        results.append(phrase_result)
+
+    # Run TurnoverThresholdChecker
+    turnover_checker = TurnoverThresholdChecker()
+    turnover_result = turnover_checker.run(
+        text=text,
+        doc_id=doc_id,
+        page_number=page_number,
+        company_profile=company_profile,
+    )
+    if turnover_result is not None:
+        results.append(turnover_result)
+
+    # Aggregate results
+    if not results:
+        # No findings from any checker -> GREEN
+        return RunResult(
+            overall=TrafficLight.GREEN,
+            summary="No KO signal detected.",
+            results=[],
+        )
 
     overall = _aggregate_status(results)
 
