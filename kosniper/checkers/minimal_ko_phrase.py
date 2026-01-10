@@ -62,8 +62,7 @@ class MinimalKoPhraseChecker(Checker):
                             doc_id=doc_id,
                             page_number=page_number,
                             snippet=snippet,
-                            start_offset=idx,
-                            end_offset=idx + len(phrase),
+                            # Offsets omitted: computed on normalized text, not original
                         )
                     ],
                 )
