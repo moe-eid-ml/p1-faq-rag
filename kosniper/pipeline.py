@@ -1,5 +1,5 @@
 from kosniper.contracts import RunResult, TrafficLight
-from kosniper.checkers.minimal_demo import MinimalKoPhraseChecker
+from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
 
 def run_single_page(text: str, doc_id: str = "demo.pdf", page_number: int = 1) -> RunResult:
     checker = MinimalKoPhraseChecker()
