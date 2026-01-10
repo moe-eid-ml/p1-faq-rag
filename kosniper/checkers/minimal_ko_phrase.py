@@ -1,7 +1,7 @@
 import re
 from typing import Optional
 
-from kosniper.contracts import CheckerResult, EvidenceSpan, TrafficLight
+from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
 from kosniper.checkers.base import Checker
 
 
@@ -41,7 +41,7 @@ class MinimalKoPhraseChecker(Checker):
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.ABSTAIN,
-                reason="no_text",
+                reason=ReasonCode.NO_TEXT,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -64,7 +64,7 @@ class MinimalKoPhraseChecker(Checker):
                 return CheckerResult(
                     checker_name=self.name,
                     status=TrafficLight.YELLOW,
-                    reason=f"Found KO phrase: {phrase}",
+                    reason=ReasonCode.KO_PHRASE_FOUND,
                     evidence=[
                         EvidenceSpan(
                             doc_id=doc_id,

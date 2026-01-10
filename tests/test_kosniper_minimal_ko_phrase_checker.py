@@ -1,6 +1,6 @@
 import pytest
 from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
-from kosniper.contracts import TrafficLight
+from kosniper.contracts import ReasonCode, TrafficLight
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ class TestHyphenation:
         )
         assert result.status == TrafficLight.YELLOW
         assert len(result.evidence) == 1
-        assert "mindestumsatz" in result.reason.lower()
+        assert result.reason == ReasonCode.KO_PHRASE_FOUND
 
     def test_hyphenated_jahresumsatz_triggers(self, checker):
         result = checker.run(
@@ -121,20 +121,20 @@ class TestEmptyText:
     def test_empty_string_returns_abstain(self, checker):
         result = checker.run(text="", doc_id="doc.pdf", page_number=1)
         assert result.status == TrafficLight.ABSTAIN
-        assert result.reason == "no_text"
+        assert result.reason == ReasonCode.NO_TEXT
         assert len(result.evidence) == 1
         assert result.evidence[0].snippet
 
     def test_whitespace_only_returns_abstain(self, checker):
         result = checker.run(text="   \n\t  ", doc_id="doc.pdf", page_number=1)
         assert result.status == TrafficLight.ABSTAIN
-        assert result.reason == "no_text"
+        assert result.reason == ReasonCode.NO_TEXT
         assert len(result.evidence) == 1
         assert result.evidence[0].snippet
 
     def test_none_text_returns_abstain(self, checker):
         result = checker.run(text=None, doc_id="doc.pdf", page_number=1)
         assert result.status == TrafficLight.ABSTAIN
-        assert result.reason == "no_text"
+        assert result.reason == ReasonCode.NO_TEXT
         assert len(result.evidence) == 1
         assert result.evidence[0].snippet

@@ -1,7 +1,7 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from kosniper.contracts import CheckerResult, EvidenceSpan, TrafficLight
+from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
 
 
 class TurnoverThresholdChecker:
@@ -187,7 +187,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.ABSTAIN,
-                reason="no_text",
+                reason=ReasonCode.NO_TEXT,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -234,7 +234,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
-                reason="missing_currency",
+                reason=ReasonCode.MISSING_CURRENCY,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -260,7 +260,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
-                reason="ambiguous_requirement",
+                reason=ReasonCode.AMBIGUOUS_REQUIREMENT,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -276,7 +276,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
-                reason="ambiguous_requirement",
+                reason=ReasonCode.AMBIGUOUS_REQUIREMENT,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -298,7 +298,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
-                reason="ambiguous_threshold_count",
+                reason=ReasonCode.AMBIGUOUS_THRESHOLD_COUNT,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -316,7 +316,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
-                reason="missing_company_turnover",
+                reason=ReasonCode.MISSING_COMPANY_TURNOVER,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -331,7 +331,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
-                reason="missing_company_turnover",
+                reason=ReasonCode.MISSING_COMPANY_TURNOVER,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
@@ -346,7 +346,7 @@ class TurnoverThresholdChecker:
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.RED,
-                reason="below_threshold",
+                reason=ReasonCode.BELOW_THRESHOLD,
                 evidence=[
                     EvidenceSpan(
                         doc_id=doc_id,
