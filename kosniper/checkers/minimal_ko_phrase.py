@@ -40,7 +40,13 @@ class MinimalKoPhraseChecker(Checker):
                 checker_name=self.name,
                 status=TrafficLight.ABSTAIN,
                 reason="no_text",
-                evidence=[],
+                evidence=[
+                    EvidenceSpan(
+                        doc_id=doc_id,
+                        page_number=page_number,
+                        snippet="(no text)",
+                    )
+                ],
             )
 
         # Search for trigger phrases (case-insensitive)
