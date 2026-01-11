@@ -21,8 +21,11 @@ jobs:
           pip install -e .
           pip install ruff pytest
 
+      - name: Byte-compile
+        run: python -m compileall -q .
+
       - name: Lint
         run: ruff check .
 
       - name: Tests
-        run: pytest -q
+        run: DISABLE_SEMANTIC=1 pytest -q

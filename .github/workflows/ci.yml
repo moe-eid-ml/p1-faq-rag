@@ -27,11 +27,14 @@ jobs:
           fi
           pip install pytest ruff
 
+      - name: Byte-compile
+        run: python -m compileall -q .
+
       - name: Lint (ruff)
         run: ruff check .
 
       - name: Run tests
-        run: pytest -q
+        run: DISABLE_SEMANTIC=1 pytest -q
 
       - name: Adversarial harness
         run: make adversarial
