@@ -23,14 +23,6 @@ def run_single_page(
     page_number: int = 1,
     company_profile: Optional[Dict[str, Any]] = None,
 ) -> RunResult:
-    # Guard: empty/None text -> ABSTAIN, never Green
-    if text is None or text.strip() == "":
-        return RunResult(
-            overall=TrafficLight.ABSTAIN,
-            summary="Insufficient data to assess; manual review required.",
-            results=[],
-        )
-
     results: List[CheckerResult] = []
 
     # Run all registered checkers in deterministic order

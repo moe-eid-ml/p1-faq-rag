@@ -117,9 +117,7 @@ def test_non_neutral_result_rejects_empty_snippet():
             checker_name="TestChecker",
             status=TrafficLight.YELLOW,
             reason=ReasonCode.KO_PHRASE_FOUND,
-            evidence=[
-                EvidenceSpan(doc_id="test.pdf", page_number=1, snippet="")
-            ],
+            evidence=[EvidenceSpan(doc_id="test.pdf", page_number=1, snippet="")],
         )
 
     with pytest.raises(ValueError, match="requires non-empty snippet"):
@@ -127,9 +125,7 @@ def test_non_neutral_result_rejects_empty_snippet():
             checker_name="TestChecker",
             status=TrafficLight.RED,
             reason=ReasonCode.BELOW_THRESHOLD,
-            evidence=[
-                EvidenceSpan(doc_id="test.pdf", page_number=1, snippet="   ")
-            ],
+            evidence=[EvidenceSpan(doc_id="test.pdf", page_number=1, snippet="   ")],
         )
 
 
@@ -140,4 +136,12 @@ def test_run_single_page_none_text_returns_abstain():
     """
     result = run_single_page(None, "doc.pdf", 1)
     assert result.overall == TrafficLight.ABSTAIN
-    assert result.summary  # Evidence of why ABSTAIN (non-empty summary)
+
+    # Guardrail: ABSTAIN must be evidenced (no evidence, no output).
+    assert result.results, "ABSTAIN should carry checker evidence when text is None"
+    for r in result.results:
+        _assert_has_evidence(r)
+        assert r.status == TrafficLight.ABSTAIN
+
+    # Explainability: pipeline should provide a human-readable reason.
+    assert result.summary  # non-empty summary
