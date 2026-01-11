@@ -1,8 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from kosniper.contracts import CheckerResult, RunResult, TrafficLight
-from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
-from kosniper.checkers.turnover_threshold import TurnoverThresholdChecker
+from kosniper.checkers.registry import get_checker_classes
 
 
 def _aggregate_status(results: List[CheckerResult]) -> TrafficLight:
@@ -34,22 +33,17 @@ def run_single_page(
 
     results: List[CheckerResult] = []
 
-    # Run MinimalKoPhraseChecker
-    phrase_checker = MinimalKoPhraseChecker()
-    phrase_result = phrase_checker.run(text=text, doc_id=doc_id, page_number=page_number)
-    if phrase_result is not None:
-        results.append(phrase_result)
-
-    # Run TurnoverThresholdChecker
-    turnover_checker = TurnoverThresholdChecker()
-    turnover_result = turnover_checker.run(
-        text=text,
-        doc_id=doc_id,
-        page_number=page_number,
-        company_profile=company_profile,
-    )
-    if turnover_result is not None:
-        results.append(turnover_result)
+    # Run all registered checkers in deterministic order
+    for checker_cls in get_checker_classes():
+        checker = checker_cls()
+        result = checker.run(
+            text=text,
+            doc_id=doc_id,
+            page_number=page_number,
+            company_profile=company_profile,
+        )
+        if result is not None:
+            results.append(result)
 
     # Aggregate results
     if not results:

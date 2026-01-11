@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
 from kosniper.checkers.base import Checker
@@ -8,7 +8,9 @@ from kosniper.checkers.base import Checker
 class MinimalKoPhraseChecker(Checker):
     name = "MinimalKoPhraseChecker"
 
-    def run(self, text: str, doc_id: str, page_number: int) -> Optional[CheckerResult]:
+    def run(
+        self, text: str, doc_id: str, page_number: int, **kwargs: Any
+    ) -> Optional[CheckerResult]:
         m = re.search(r"Ausschlusskriterium", text, flags=re.IGNORECASE)
         if not m:
             # No phrase match -> zero findings (None)

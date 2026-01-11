@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
 from kosniper.checkers.base import Checker
@@ -33,7 +33,9 @@ class MinimalKoPhraseChecker(Checker):
         normalized = re.sub(r"\s+", " ", normalized)
         return normalized.strip()
 
-    def run(self, text: str, doc_id: str, page_number: int) -> Optional[CheckerResult]:
+    def run(
+        self, text: str, doc_id: str, page_number: int, **kwargs: Any
+    ) -> Optional[CheckerResult]:
         normalized = self._normalize(text)
 
         # Stop condition: empty text after normalization -> abstain
