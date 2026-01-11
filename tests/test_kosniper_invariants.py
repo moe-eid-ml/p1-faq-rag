@@ -131,3 +131,13 @@ def test_non_neutral_result_rejects_empty_snippet():
                 EvidenceSpan(doc_id="test.pdf", page_number=1, snippet="   ")
             ],
         )
+
+
+def test_run_single_page_none_text_returns_abstain():
+    """Invariant: run_single_page(None, ...) => ABSTAIN, not GREEN.
+
+    MC-KOS-08: Ensures None text is safe and never becomes GREEN.
+    """
+    result = run_single_page(None, "doc.pdf", 1)
+    assert result.overall == TrafficLight.ABSTAIN
+    assert result.summary  # Evidence of why ABSTAIN (non-empty summary)

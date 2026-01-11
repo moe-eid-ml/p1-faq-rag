@@ -9,8 +9,10 @@ class MinimalKoPhraseChecker(Checker):
     name = "MinimalKoPhraseChecker"
 
     def run(
-        self, text: str, doc_id: str, page_number: int, **kwargs: Any
+        self, text: Optional[str], doc_id: str, page_number: int, **kwargs: Any
     ) -> Optional[CheckerResult]:
+        if not text:
+            return None
         m = re.search(r"Ausschlusskriterium", text, flags=re.IGNORECASE)
         if not m:
             # No phrase match -> zero findings (None)
