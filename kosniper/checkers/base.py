@@ -9,6 +9,6 @@ class Checker(ABC):
 
     @abstractmethod
     def run(
-        self, text: str, doc_id: str, page_number: int, **kwargs: Any
+        self, text: Optional[str], doc_id: str, page_number: int, **kwargs: Any
     ) -> Optional[CheckerResult]:
         raise NotImplementedError

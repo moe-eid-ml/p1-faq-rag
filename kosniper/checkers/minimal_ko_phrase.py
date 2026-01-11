@@ -34,7 +34,7 @@ class MinimalKoPhraseChecker(Checker):
         return normalized.strip()
 
     def run(
-        self, text: str, doc_id: str, page_number: int, **kwargs: Any
+        self, text: Optional[str], doc_id: str, page_number: int, **kwargs: Any
     ) -> Optional[CheckerResult]:
         normalized = self._normalize(text)
 
