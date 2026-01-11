@@ -2,9 +2,10 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
+from kosniper.checkers.base import Checker
 
 
-class TurnoverThresholdChecker:
+class TurnoverThresholdChecker(Checker):
     """Deterministic checker for turnover threshold requirements (Mindestumsatz/Jahresumsatz).
 
     Compares extracted thresholds against company profile turnover.
@@ -174,6 +175,7 @@ class TurnoverThresholdChecker:
         doc_id: str,
         page_number: int,
         company_profile: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> Optional[CheckerResult]:
         """Run the turnover threshold checker.
 
