@@ -4,7 +4,7 @@ This folder contains **Mission Cards**: small, testable “contracts” for one-
 
 The rule is simple:
 - **If it’s not in the Mission Card’s Acceptance Criteria, it does not go in the diff.**
-- Anything useful but out-of-scope goes into `parking-lot.md` (root).
+- Anything useful but out-of-scope goes into `docs/parking-lot.md`.
 
 ## Why this exists
 Mission Cards prevent scope creep, keep PRs reviewable, and make it easy to use coding agents (Claude Code/Codex) without losing control.
