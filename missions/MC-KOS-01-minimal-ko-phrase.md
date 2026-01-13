@@ -56,7 +56,7 @@ Normalization requirement:
 - `DISABLE_SEMANTIC=1 pytest -q`
 
 ## PR hygiene
-- Anything discovered that is useful but not required by the acceptance criteria goes to `parking-lot.md` (do not include it in the diff).
+- Anything discovered that is useful but not required by the acceptance criteria goes to `docs/parking-lot.md` (do not include it in the diff).
 - Keep changes minimal and local to listed files.
 
 ## Walkthrough (fill in PR)

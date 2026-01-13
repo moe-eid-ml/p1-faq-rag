@@ -118,7 +118,7 @@ Add unit tests covering:
 - `DISABLE_SEMANTIC=1 pytest -q`
 
 ## PR hygiene
-- Anything useful but not required by the acceptance criteria goes to `parking-lot.md` (root) and does not go in the diff.
+- Anything useful but not required by the acceptance criteria goes to `docs/parking-lot.md` and does not go in the diff.
 - Keep parsing deterministic and local; prefer YELLOW over clever guesses.
 
 ## Walkthrough (fill in PR)
