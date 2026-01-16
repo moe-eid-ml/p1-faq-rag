@@ -55,6 +55,24 @@ class EvidenceSpan:
                 "EvidenceSpan requires start_offset and end_offset to be both None or both int"
             )
 
+    def to_dict(self) -> Dict[str, object]:
+        """Convert to JSON-serializable dict. Only includes non-None optional fields."""
+        d: Dict[str, object] = {
+            "doc_id": self.doc_id,
+            "page": self.page_number,
+            "snippet": self.snippet,
+        }
+        if self.start_offset is not None:
+            d["start_offset"] = self.start_offset
+            d["end_offset"] = self.end_offset
+        if self.paragraph_index is not None:
+            d["paragraph_index"] = self.paragraph_index
+        if self.bbox is not None:
+            d["bbox"] = self.bbox
+        return d
+
+
+
 
 @dataclass(frozen=True)
 class CheckerResult:
@@ -82,6 +100,15 @@ class CheckerResult:
                         f"Non-neutral result ({self.status.value}) requires non-empty snippet"
                     )
 
+    def to_dict(self) -> Dict[str, object]:
+        """Convert to JSON-serializable dict for evidence pack."""
+        return {
+            "check_id": self.checker_name,
+            "verdict": self.status.value,
+            "reason": self.reason.value,
+            "evidence": [ev.to_dict() for ev in self.evidence],
+        }
+
 
 @dataclass(frozen=True)
 class RunResult:
@@ -95,3 +122,55 @@ class RunResult:
     overall: TrafficLight
     summary: str
     results: List[CheckerResult]
+
+    def to_dict(self) -> Dict[str, object]:
+        """Convert to JSON-serializable dict for evidence pack."""
+        return {
+            "verdict": self.overall.value,
+            "overall_verdict": self.overall.value,
+            "summary": self.summary,
+            "checks": [r.to_dict() for r in self.results],
+        }
+
+
+@dataclass(frozen=True)
+class EvidencePack:
+    """Machine-readable evidence pack artifact for KO-scanner output.
+
+    Provides JSON-serializable format containing:
+    1) overall traffic light verdict
+    2) per-check entries with: check_id/name, verdict, and evidence items
+    3) each evidence item includes: doc_id, page, snippet, optional offsets/bbox
+
+    Strict rule enforced by CheckerResult: if evidence is missing for a check,
+    that check cannot be GREEN (must be YELLOW/ABSTAIN/RED).
+    """
+
+    run_result: RunResult
+    schema_version: str = "1.0"
+
+    def to_dict(self) -> Dict[str, object]:
+        """Convert to JSON-serializable dict.
+
+        Structure:
+        {
+            "schema_version": "1.0",
+            "verdict": "red"|"yellow"|"green"|"abstain",
+            "summary": "...",
+            "checks": [
+                {
+                    "check_id": "CheckerName",
+                    "verdict": "red"|"yellow"|"green"|"abstain",
+                    "reason": "reason_code",
+                    "evidence": [
+                        {"doc_id": "...", "page": 1, "snippet": "...", ...}
+                    ]
+                }
+            ]
+        }
+        """
+        base = self.run_result.to_dict()
+        return {
+            "schema_version": self.schema_version,
+            **base,
+        }

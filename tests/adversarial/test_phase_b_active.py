@@ -13,6 +13,7 @@ import json
 import app
 
 from sniper.checkers import determine_verdict
+from kosniper.contracts import TrafficLight
 
 
 def test_sniper_trace_v1_exists_in_trace():
@@ -70,7 +71,7 @@ def test_sniper_trace_v1_exists_in_trace():
         assert field in sniper, f"sniper_trace_v1 missing required field: {field}"
 
     # Verify verdict is valid
-    assert sniper["verdict"] in {"GREEN", "YELLOW", "RED"}, \
+    assert sniper["verdict"] in {t.name for t in TrafficLight}, \
         f"Invalid verdict: {sniper['verdict']}"
 
     # Verify sources is a list

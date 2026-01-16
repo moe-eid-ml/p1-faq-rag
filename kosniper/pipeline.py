@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from kosniper.contracts import CheckerResult, RunResult, TrafficLight
+from kosniper.contracts import CheckerResult, EvidencePack, RunResult, TrafficLight
 from kosniper.checkers.registry import get_checker_classes
 
 
@@ -19,10 +19,13 @@ def _aggregate_status(results: List[CheckerResult]) -> TrafficLight:
 
 def run_single_page(
     text: Optional[str],
-    doc_id: str = "demo.pdf",
-    page_number: int = 1,
+    doc_id: str,
+    page_number: int,
     company_profile: Optional[Dict[str, Any]] = None,
 ) -> RunResult:
+    if not doc_id or page_number <= 0:
+        raise ValueError("doc_id and page_number are required for provenance")
+
     results: List[CheckerResult] = []
 
     # Run all registered checkers in deterministic order
@@ -58,3 +61,19 @@ def run_single_page(
         summary = "No KO signal detected."
 
     return RunResult(overall=overall, summary=summary, results=results)
+
+
+def make_evidence_pack(
+    text: Optional[str],
+    doc_id: str,
+    page_number: int,
+    company_profile: Optional[Dict[str, Any]] = None,
+) -> EvidencePack:
+    """Run KO-scanner and return machine-readable evidence pack.
+
+    Convenience wrapper that runs the scanner and wraps result in EvidencePack.
+    """
+    if not doc_id or page_number <= 0:
+        raise ValueError("doc_id and page_number are required for provenance")
+    result = run_single_page(text, doc_id, page_number, company_profile)
+    return EvidencePack(run_result=result)

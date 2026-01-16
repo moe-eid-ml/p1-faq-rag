@@ -19,9 +19,16 @@ import datetime as _dt
 
 from app_pkg.lang import detect_lang, AR_RE
 from app_pkg.retrieval import source_url
+from kosniper.contracts import TrafficLight
 MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 GITHUB_BLOB_BASE = "https://github.com/moe-eid-ml/p1-faq-rag/blob/main/"
+SEMANTIC_DISABLED = os.getenv("DISABLE_SEMANTIC", "0") == "1"
+
+
+class SemanticUnavailableError(RuntimeError):
+    """Raised when semantic retrieval is requested but unavailable in strict mode."""
+
 
 # ----------------- Lang detect -----------------
 # logging flags: opt-in locally, always disable on Hugging Face Spaces
@@ -73,6 +80,13 @@ embedder = None
 doc_embeddings = None
 _semantic_ready = False
 
+def semantic_ready() -> bool:
+    return bool(_semantic_ready)
+
+def ensure_semantic_ready() -> bool:
+    _init_embeddings()
+    return bool(_semantic_ready)
+
 def _emb_cache_key(model_name, _docs):
     mts = [os.path.getmtime(d["path"]) for d in _docs]
     return f"{model_name}|{len(_docs)}|{int(sum(mts))}"
@@ -85,6 +99,9 @@ def _init_embeddings():
     """
     global embedder, doc_embeddings, _semantic_ready
     if _semantic_ready:
+        return
+    if SEMANTIC_DISABLED:
+        _semantic_ready = False
         return
 
     try:
@@ -148,7 +165,7 @@ def log_query(row: dict):
             w.writeheader()
         w.writerow(row)
 
-def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", link_mode="github", trace: bool = False):
+def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", link_mode="github", trace: bool = False, strict: bool = False):
     if not query.strip():
         if trace:
             trace_id = str(uuid.uuid4())
@@ -159,7 +176,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
                 "trace_id": trace_id,
                 "timestamp": ts,
                 "query": query,
-                "verdict": "YELLOW",
+                "verdict": TrafficLight.YELLOW.name,
                 "verdict_reason": "empty_query",
                 "answer": None,
                 "sources": [],
@@ -269,6 +286,8 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
         # 1) semantic query embedding (once)
         _init_embeddings()
         if not _semantic_ready:
+            if strict:
+                raise SemanticUnavailableError("Semantic embeddings unavailable (strict mode)")
             mode = "TF-IDF"
         if mode == "Hybrid":
             q_emb = embedder.encode(query, convert_to_numpy=True)
@@ -312,6 +331,8 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
     else:  # Semantic
         _init_embeddings()
         if not _semantic_ready:
+            if strict:
+                raise SemanticUnavailableError("Semantic embeddings unavailable (strict mode)")
             # fallback to TF-IDF if semantic deps are missing
             passages, scores = tfidf.search(query, k=_tfidf_pool())
             order = np.argsort(scores)[::-1]
@@ -355,7 +376,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
                 "trace_id": trace_id,
                 "timestamp": ts,
                 "query": query,
-                "verdict": "YELLOW",
+                "verdict": TrafficLight.YELLOW.name,
                 "verdict_reason": "no_results",
                 "answer": None,
                 "sources": [],
@@ -632,7 +653,7 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             )
 
         # Phase B policy: provenance is emitted, but we still do not certify GREEN.
-        sniper_verdict = "YELLOW"
+        sniper_verdict = TrafficLight.YELLOW
         sniper_reason = (
             "clarify" if bool(broad_clarify)
             else f"abstain:{abstain_reason}" if bool(abstained)
@@ -643,9 +664,9 @@ def answer(query, k=3, mode="Semantic", include="", lang="auto", exclude="", lin
             "trace_id": str(uuid.uuid4()),
             "timestamp": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
             "query": query,
-            "verdict": sniper_verdict,
+            "verdict": sniper_verdict.name,
             "verdict_reason": sniper_reason,
-            "answer": None if sniper_verdict == "RED" else answer_text,
+            "answer": None if sniper_verdict == TrafficLight.RED else answer_text,
             "sources": sources_v1,
             "model_version": MODEL_NAME,
             "pipeline_version": pipeline_version,

@@ -36,7 +36,7 @@ class MinimalKoPhraseChecker(Checker):
     def run(
         self, text: Optional[str], doc_id: str, page_number: int, **kwargs: Any
     ) -> Optional[CheckerResult]:
-        normalized = self._normalize(text)
+        normalized = self._normalize(text or "")
 
         # Stop condition: empty text after normalization -> abstain
         if not normalized:
