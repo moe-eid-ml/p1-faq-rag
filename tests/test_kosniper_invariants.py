@@ -21,10 +21,12 @@ def _assert_has_evidence(result):
 def test_non_neutral_results_include_evidence():
     checker = MinimalKoPhraseChecker()
     result = checker.run("Dies ist ein Ausschlusskriterium.", "doc.pdf", 1)
+    assert result is not None
     _assert_has_evidence(result)
     assert result.status == TrafficLight.YELLOW
 
     abstain_result = checker.run("", "doc.pdf", 2)
+    assert abstain_result is not None
     _assert_has_evidence(abstain_result)
     assert abstain_result.status == TrafficLight.ABSTAIN
 
