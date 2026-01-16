@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
 
-ALLOWED_VERDICTS = {"GREEN", "YELLOW", "RED"}
+from kosniper.contracts import TrafficLight
+
+ALLOWED_VERDICTS = {t.name for t in TrafficLight}
 
 def test_cases_v1_json_is_valid_and_well_formed():
     p = Path("tests/adversarial/cases_v1.json")
