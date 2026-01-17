@@ -112,6 +112,7 @@ class TestEvidencePackSerialization:
         ev = checks[0]["evidence"][0]
         assert ev["start_offset"] == 100
         assert ev["end_offset"] == 115
+        assert ev["offset_basis"] == "raw_text_v1"
         assert ev["paragraph_index"] == 2
         assert ev["bbox"] == {"x0": 0.1, "y0": 0.2, "x1": 0.9, "y1": 0.3}
 
