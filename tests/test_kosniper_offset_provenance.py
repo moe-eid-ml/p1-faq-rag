@@ -1,9 +1,10 @@
-"""MC-KOS-15: Tests for offset provenance in evidence spans.
+"""MC-KOS-15 / MC-KOS-17: Tests for offset provenance in evidence spans.
 
 Tests verify:
 1) Checker populates start_offset/end_offset for matches
 2) Offsets are within bounds and slice contains matched phrase
-3) Adversarial: proof-first invariants still hold
+3) offset_basis is set to "normalized_text_v1" when offsets exist
+4) Adversarial: proof-first invariants still hold
 """
 
 import pytest
@@ -72,6 +73,32 @@ class TestOffsetProvenance:
         sliced = normalized[ev.start_offset:ev.end_offset].lower()
         # First trigger phrase matched should be "ausschlusskriterium"
         assert sliced == "ausschlusskriterium"
+
+    def test_offset_basis_set_when_offsets_exist(self, checker):
+        """MC-KOS-17: offset_basis is set when offsets exist."""
+        text = "Dies ist ein Ausschlusskriterium für Bieter."
+        result = checker.run(text=text, doc_id="doc.pdf", page_number=1)
+
+        assert result is not None
+        ev = result.evidence[0]
+
+        # When offsets exist, offset_basis must be set
+        assert ev.start_offset is not None
+        assert ev.end_offset is not None
+        assert ev.offset_basis is not None
+        assert ev.offset_basis == "normalized_text_v1"
+
+    def test_offset_basis_in_serialized_output(self, checker):
+        """MC-KOS-17: offset_basis appears in to_dict() when set."""
+        text = "Der Mindestumsatz beträgt 500.000 EUR."
+        result = checker.run(text=text, doc_id="doc.pdf", page_number=1)
+
+        assert result is not None
+        ev = result.evidence[0]
+        ev_dict = ev.to_dict()
+
+        assert "offset_basis" in ev_dict
+        assert ev_dict["offset_basis"] == "normalized_text_v1"
 
 
 class TestOffsetEdgeCases:
@@ -155,3 +182,30 @@ class TestOffsetAdversarial:
         ev = result.evidence[0]
         assert ev.start_offset is None
         assert ev.end_offset is None
+
+    def test_adversarial_no_offset_no_basis(self, checker):
+        """ADVERSARIAL: When no offsets, offset_basis should be None (not set)."""
+        result = checker.run(text="", doc_id="doc.pdf", page_number=1)
+
+        assert result is not None
+        ev = result.evidence[0]
+        # No offsets -> no offset_basis
+        assert ev.start_offset is None
+        assert ev.offset_basis is None
+
+        # Verify not in serialized output either
+        ev_dict = ev.to_dict()
+        assert "offset_basis" not in ev_dict
+
+    def test_adversarial_offset_basis_required_with_offsets(self, checker):
+        """ADVERSARIAL: offsets require non-empty offset_basis."""
+        import pytest
+        with pytest.raises(ValueError, match="offset_basis"):
+            EvidenceSpan(
+                doc_id="doc.pdf",
+                page_number=1,
+                snippet="test snippet",
+                start_offset=0,
+                end_offset=10,
+                # offset_basis intentionally omitted
+            )

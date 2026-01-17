@@ -78,6 +78,7 @@ class MinimalKoPhraseChecker(Checker):
                             snippet=snippet,
                             start_offset=match_start,
                             end_offset=match_end,
+                            offset_basis="normalized_text_v1",
                         )
                     ],
                 )

@@ -89,6 +89,7 @@ class TestEvidencePackSerialization:
             snippet="Test snippet",
             start_offset=100,
             end_offset=115,
+            offset_basis="raw_text_v1",
             paragraph_index=2,
             bbox={"x0": 0.1, "y0": 0.2, "x1": 0.9, "y1": 0.3},
         )

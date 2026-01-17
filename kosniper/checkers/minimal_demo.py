@@ -32,6 +32,7 @@ class MinimalKoPhraseChecker(Checker):
                     snippet=snippet,
                     start_offset=start,
                     end_offset=end,
+                    offset_basis="raw_text_v1",
                 )
             ],
         )
