@@ -6,10 +6,8 @@ Verifies the one-command demo runner produces valid evidence pack JSON.
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 
-import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DEMO_SCRIPT = PROJECT_ROOT / "scripts" / "demo.sh"
