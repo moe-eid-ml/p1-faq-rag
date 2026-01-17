@@ -1,0 +1,9 @@
+Allgemeine Projektbeschreibung
+
+Die Leistung umfasst die Entwicklung und Implementierung
+einer Softwarelösung für das Dokumentenmanagement.
+
+Der Auftragnehmer stellt die erforderlichen Ressourcen
+bereit und liefert die vereinbarten Ergebnisse.
+
+Projektlaufzeit: 12 Monate
