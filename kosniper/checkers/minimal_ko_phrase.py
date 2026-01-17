@@ -63,6 +63,10 @@ class MinimalKoPhraseChecker(Checker):
                 snippet_end = min(len(normalized), idx + len(phrase) + 60)
                 snippet = normalized[snippet_start:snippet_end]
 
+                # Compute offsets on normalized text (not original raw input).
+                match_start = idx
+                match_end = idx + len(phrase)
+
                 return CheckerResult(
                     checker_name=self.name,
                     status=TrafficLight.YELLOW,
@@ -72,7 +76,8 @@ class MinimalKoPhraseChecker(Checker):
                             doc_id=doc_id,
                             page_number=page_number,
                             snippet=snippet,
-                            # Offsets omitted: computed on normalized text, not original
+                            start_offset=match_start,
+                            end_offset=match_end,
                         )
                     ],
                 )
