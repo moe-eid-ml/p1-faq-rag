@@ -12,6 +12,21 @@ class TrafficLight(str, Enum):
     ABSTAIN = "abstain"
 
 
+# Verdict severity ordering: lower index = worse (red is worst, green is best)
+_VERDICT_SEVERITY = [TrafficLight.RED, TrafficLight.YELLOW, TrafficLight.ABSTAIN, TrafficLight.GREEN]
+
+
+def worst_verdict(verdicts: List["TrafficLight"]) -> "TrafficLight":
+    """Return the worst verdict from a list (red > yellow > abstain > green).
+
+    If empty list, returns GREEN (no signals = green).
+    """
+    if not verdicts:
+        return TrafficLight.GREEN
+    worst_idx = min(_VERDICT_SEVERITY.index(v) for v in verdicts)
+    return _VERDICT_SEVERITY[worst_idx]
+
+
 class ReasonCode(str, Enum):
     """Typed reason codes for CheckerResult."""
 
@@ -122,11 +137,23 @@ class RunResult:
     Public contract: this schema is intended to remain stable as checkers grow.
     Future-proofing note: provenance/trace packaging (BlackBox-style) should be added as
     optional, additive fields rather than changing existing meanings.
+
+    Invariant: overall must equal worst verdict among results (if results non-empty).
     """
 
     overall: TrafficLight
     summary: str
     results: List[CheckerResult]
+
+    def __post_init__(self) -> None:
+        """Validate overall verdict matches worst of check verdicts."""
+        if self.results:
+            expected = worst_verdict([r.status for r in self.results])
+            if self.overall != expected:
+                raise ValueError(
+                    f"RunResult.overall ({self.overall.value}) must equal worst verdict "
+                    f"({expected.value}) from checks"
+                )
 
     def to_dict(self) -> Dict[str, object]:
         """Convert to JSON-serializable dict for evidence pack."""
