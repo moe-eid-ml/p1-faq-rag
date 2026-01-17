@@ -171,6 +171,21 @@ class TestGoldenProvenanceFields:
                     snippet = ev.get("snippet", "")
                     assert isinstance(snippet, str), f"Snippet must be string: {ev}"
                     assert len(snippet.strip()) > 0, f"Snippet must be non-empty: {ev}"
+                    # Offsets (when present) must be paired and monotonic
+                    if "start_offset" in ev or "end_offset" in ev:
+                        assert "start_offset" in ev and "end_offset" in ev, (
+                            f"Offsets must be paired: {ev}"
+                        )
+                        assert isinstance(ev["start_offset"], int)
+                        assert isinstance(ev["end_offset"], int)
+                        assert 0 <= ev["start_offset"] <= ev["end_offset"], (
+                            f"Offsets must be ordered and non-negative: {ev}"
+                        )
+                        # If a normalized_text field is present, offsets must slice a non-empty span.
+                        normalized = data.get("normalized_text")
+                        if isinstance(normalized, str):
+                            sliced = normalized[ev["start_offset"]:ev["end_offset"]]
+                            assert sliced.strip(), "Offset slice must be non-empty"
 
 
 class TestGoldenSafetyInvariants:
