@@ -210,3 +210,12 @@ python ask.py -m TF-IDF -k 3 -i wohngeld "Welche Unterlagen brauche ich für den
 make ask Q="Welche Unterlagen brauche ich für den Wohngeldantrag?"
 make ask Q="Bearbeitungszeit Wohngeld?" MODE=Hybrid K=5
 ```
+
+## KOSniper Demo
+
+Run the KO-scanner on a sample tender and generate an evidence pack:
+
+```bash
+./scripts/demo.sh
+# Output: evidence_pack.json (JSON with overall_verdict + checks)
+```
