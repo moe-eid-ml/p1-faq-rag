@@ -181,6 +181,16 @@ class TestGoldenProvenanceFields:
                         assert 0 <= ev["start_offset"] <= ev["end_offset"], (
                             f"Offsets must be ordered and non-negative: {ev}"
                         )
+                        # MC-KOS-17: offset_basis must be present and non-empty when offsets exist
+                        assert "offset_basis" in ev, (
+                            f"offset_basis required when offsets present: {ev}"
+                        )
+                        assert isinstance(ev["offset_basis"], str), (
+                            f"offset_basis must be string: {ev}"
+                        )
+                        assert len(ev["offset_basis"]) > 0, (
+                            f"offset_basis must be non-empty: {ev}"
+                        )
                         # If a normalized_text field is present, offsets must slice a non-empty span.
                         normalized = data.get("normalized_text")
                         if isinstance(normalized, str):

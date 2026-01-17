@@ -42,6 +42,7 @@ class EvidenceSpan:
     snippet: str
     start_offset: Optional[int] = None
     end_offset: Optional[int] = None
+    offset_basis: Optional[str] = None  # e.g. "normalized_text_v1" - declares what offsets are relative to
     paragraph_index: Optional[int] = None
     # bbox-ready (optional, do not require for MVP)
     bbox: Optional[Dict[str, float]] = None  # {"x0":..., "y0":..., "x1":..., "y1":...}
@@ -54,6 +55,8 @@ class EvidenceSpan:
             raise ValueError(
                 "EvidenceSpan requires start_offset and end_offset to be both None or both int"
             )
+        if has_start and (self.offset_basis is None or not self.offset_basis.strip()):
+            raise ValueError("EvidenceSpan requires offset_basis when offsets are present")
 
     def to_dict(self) -> Dict[str, object]:
         """Convert to JSON-serializable dict. Only includes non-None optional fields."""
@@ -65,6 +68,8 @@ class EvidenceSpan:
         if self.start_offset is not None:
             d["start_offset"] = self.start_offset
             d["end_offset"] = self.end_offset
+        if self.offset_basis is not None:
+            d["offset_basis"] = self.offset_basis
         if self.paragraph_index is not None:
             d["paragraph_index"] = self.paragraph_index
         if self.bbox is not None:
