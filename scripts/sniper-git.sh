@@ -25,9 +25,20 @@ new_branch(){
 
 pr_link(){
   local b
+  local origin_url
+  local repo
   b="$(git branch --show-current)"
+  origin_url="$(git remote get-url origin)"
+  if [[ "${origin_url}" == git@*:* ]]; then
+    repo="${origin_url#git@}"
+    repo="${repo#*:}"
+  else
+    repo="${origin_url#https://github.com/}"
+    repo="${repo#http://github.com/}"
+  fi
+  repo="${repo%.git}"
   git push -u origin HEAD >/dev/null
-  echo "https://github.com/moe-eid-ml/p1-faq-rag/pull/new/${b}"
+  echo "https://github.com/${repo}/pull/new/${b}"
 }
 
 case "${1:-}" in

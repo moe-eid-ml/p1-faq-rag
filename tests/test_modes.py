@@ -23,4 +23,4 @@ def test_semantic_strict_requires_semantic():
         pytest.fail("Semantic strict mode unavailable; install sentence-transformers/torch or set DISABLE_SEMANTIC=1 to skip")
     ans, src = app.answer("Welche Unterlagen brauche ich für Wohngeld?", k=3, mode="Semantic", strict=True)
     assert isinstance(ans, str) and len(ans) > 0
-    assert "[1]" in src
+    assert isinstance(src, str) and "[1]" in src
