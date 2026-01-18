@@ -7,3 +7,5 @@ torch>=2.1
 langdetect>=1.0.9
 pytest>=7.0
 pypdf>=4.0.0
+
+pypdf
