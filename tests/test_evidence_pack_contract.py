@@ -49,7 +49,9 @@ class TestEvidencePackContract:
         assert d["overall_verdict"] == "yellow"
         assert d["verdict"] == "yellow"
         assert "checks" in d
-        assert len(d["checks"]) == 1
+        checks = d.get("checks")
+        assert isinstance(checks, list)
+        assert len(checks) == 1
         # Round-trip through JSON
         assert json.loads(json.dumps(d))["overall_verdict"] == "yellow"
 
