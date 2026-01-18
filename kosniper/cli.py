@@ -3,6 +3,7 @@
 Usage:
     python -m kosniper.cli --doc-id tender.pdf --page 3 --text "Mindestumsatz 500.000 EUR"
     python -m kosniper.cli --doc-id tender.pdf --page 3 --text-file input.txt --out result.json
+    python -m kosniper.cli --pdf tender.pdf --out ingest.json  (PDF ingest mode)
 """
 
 from __future__ import annotations
@@ -23,14 +24,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
     parser.add_argument(
         "--doc-id",
-        required=True,
-        help="Document identifier for provenance (required)",
+        help="Document identifier for provenance (required for scanner mode, optional for --pdf)",
     )
     parser.add_argument(
         "--page",
         type=int,
-        required=True,
-        help="Page number in document (required, must be >= 1)",
+        help="Page number in document (required for scanner mode, must be >= 1)",
     )
     parser.add_argument(
         "--text",
@@ -38,7 +37,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
     parser.add_argument(
         "--text-file",
-        help="Path to file containing text to scan (mutually exclusive with --text)",
+        help="Path to file containing text to scan (mutually exclusive with --text, --pdf)",
+    )
+    parser.add_argument(
+        "--pdf",
+        help="Path to PDF file for ingestion mode (mutually exclusive with --text, --text-file)",
     )
     parser.add_argument(
         "--out",
@@ -58,15 +61,58 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     args = parser.parse_args(argv)
 
-    # Validate mutually exclusive text input
-    if args.text is not None and args.text_file is not None:
-        print("Error: --text and --text-file are mutually exclusive", file=sys.stderr)
+    # Count input modes
+    input_modes = sum([
+        args.text is not None,
+        args.text_file is not None,
+        args.pdf is not None,
+    ])
+
+    if input_modes > 1:
+        print("Error: --text, --text-file, and --pdf are mutually exclusive", file=sys.stderr)
         return 2
-    if args.text is None and args.text_file is None:
-        print("Error: one of --text or --text-file is required", file=sys.stderr)
+    if input_modes == 0:
+        print("Error: one of --text, --text-file, or --pdf is required", file=sys.stderr)
         return 2
 
-    # Validate page number
+    # PDF ingestion mode
+    if args.pdf is not None:
+        from kosniper.ingest.pdf_ingest import ingest_pdf
+
+        try:
+            result = ingest_pdf(args.pdf, doc_id=args.doc_id if args.doc_id else None)
+        except FileNotFoundError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 2
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 2
+
+        # Output JSON
+        if args.format == "json":
+            json_output = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
+        else:
+            json_output = json.dumps(result, indent=2, ensure_ascii=False)
+        if args.out:
+            with open(args.out, "w", encoding="utf-8") as f:
+                f.write(json_output)
+                f.write("\n")
+        else:
+            print(json_output)
+
+        if not args.quiet:
+            page_count = len(result.get("pages", []))
+            print(f"[INGEST] {result['doc_id']} ({page_count} page(s))", file=sys.stderr)
+
+        return 0
+
+    # Validate required args for scanner mode
+    if args.doc_id is None:
+        print("Error: --doc-id is required for scanner mode", file=sys.stderr)
+        return 2
+    if args.page is None:
+        print("Error: --page is required for scanner mode", file=sys.stderr)
+        return 2
     if args.page < 1:
         print("Error: --page must be >= 1", file=sys.stderr)
         return 2
