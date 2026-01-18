@@ -102,7 +102,8 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if not args.quiet:
             page_count = len(result.get("pages", []))
-            print(f"[INGEST] {result['doc_id']} ({page_count} page(s))", file=sys.stderr)
+            doc_id = result.get("doc_id", args.pdf)
+            print(f"[INGEST] {doc_id} ({page_count} page(s))", file=sys.stderr)
 
         return 0
 
