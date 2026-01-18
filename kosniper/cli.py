@@ -44,6 +44,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         "--out",
         help="Output file path (optional, defaults to stdout)",
     )
+    parser.add_argument(
+        "--format",
+        choices=["pretty", "json"],
+        default="pretty",
+        help="Output format: pretty (indented) or json (compact)",
+    )
 
     args = parser.parse_args(argv)
 
@@ -74,7 +80,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Run scanner
     pack = make_evidence_pack(text=text, doc_id=args.doc_id, page_number=args.page)
     result = pack.to_dict()
-    checks = result.get("checks", [])
+    checks = result.get("checks")
+    if not isinstance(checks, list):
+        checks = []
 
     # Guard 1: GREEN without evidence is not allowed
     if result.get("overall_verdict") == "green" and not checks:
@@ -84,7 +92,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Guard 2: Contradiction check - no check verdict should be worse than overall
     # Severity ordering: red > yellow > abstain > green (lower index = worse)
     severity = {"red": 0, "yellow": 1, "abstain": 2, "green": 3}
-    overall = result.get("overall_verdict", "green")
+    overall = result.get("overall_verdict")
+    if not isinstance(overall, str):
+        overall = "green"
     overall_sev = severity.get(overall, 3)
     for check in checks:
         check_verdict = check.get("verdict", "green")
@@ -98,7 +108,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             return 2
 
     # Output JSON
-    json_output = json.dumps(result, indent=2, ensure_ascii=False)
+    if args.format == "json":
+        json_output = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
+    else:
+        json_output = json.dumps(result, indent=2, ensure_ascii=False)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:
             f.write(json_output)
@@ -107,7 +120,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(json_output)
 
     # Print human summary to stderr
-    verdict = result.get("overall_verdict", "unknown")
+    verdict = result.get("overall_verdict")
+    if not isinstance(verdict, str):
+        verdict = "unknown"
     summary = result.get("summary", "")
     check_count = len(checks)
     print(f"[{verdict.upper()}] {summary} ({check_count} check(s))", file=sys.stderr)
