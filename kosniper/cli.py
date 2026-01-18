@@ -89,21 +89,42 @@ def main(argv: Optional[list[str]] = None) -> int:
     if not isinstance(checks, list):
         checks = []
 
+    # Allowed verdict values (fail-closed: reject unknown)
+    allowed_verdicts = {"red", "yellow", "abstain", "green"}
+
+    # Guard 0: Validate overall_verdict exists and is allowed (fail-closed)
+    overall = result.get("overall_verdict")
+    if not isinstance(overall, str) or overall not in allowed_verdicts:
+        print(
+            f"Error: Invalid or missing overall_verdict ({overall!r}). "
+            f"Must be one of: {sorted(allowed_verdicts)}",
+            file=sys.stderr,
+        )
+        return 2
+
+    # Guard 0b: Validate each check verdict (fail-closed)
+    for i, check in enumerate(checks):
+        check_verdict = check.get("verdict")
+        if not isinstance(check_verdict, str) or check_verdict not in allowed_verdicts:
+            print(
+                f"Error: Invalid or missing verdict in check {i} ({check_verdict!r}). "
+                f"Must be one of: {sorted(allowed_verdicts)}",
+                file=sys.stderr,
+            )
+            return 2
+
     # Guard 1: GREEN without evidence is not allowed
-    if result.get("overall_verdict") == "green" and not checks:
+    if overall == "green" and not checks:
         print("Error: GREEN without evidence is not allowed", file=sys.stderr)
         return 2
 
     # Guard 2: Contradiction check - no check verdict should be worse than overall
     # Severity ordering: red > yellow > abstain > green (lower index = worse)
     severity = {"red": 0, "yellow": 1, "abstain": 2, "green": 3}
-    overall = result.get("overall_verdict")
-    if not isinstance(overall, str):
-        overall = "green"
-    overall_sev = severity.get(overall, 3)
+    overall_sev = severity[overall]  # Safe: validated above
     for check in checks:
-        check_verdict = check.get("verdict", "green")
-        check_sev = severity.get(check_verdict, 3)
+        check_verdict = check["verdict"]  # Safe: validated above
+        check_sev = severity[check_verdict]
         if check_sev < overall_sev:
             print(
                 f"Error: Contradictory output - check verdict ({check_verdict}) "
@@ -126,12 +147,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     # Print human summary to stderr
     if not args.quiet:
-        verdict = result.get("overall_verdict")
-        if not isinstance(verdict, str):
-            verdict = "unknown"
         summary = result.get("summary", "")
         check_count = len(checks)
-        print(f"[{verdict.upper()}] {summary} ({check_count} check(s))", file=sys.stderr)
+        print(f"[{overall.upper()}] {summary} ({check_count} check(s))", file=sys.stderr)
 
     return 0
 
