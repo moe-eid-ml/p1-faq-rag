@@ -50,6 +50,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         default="pretty",
         help="Output format: pretty (indented) or json (compact)",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress human summary output to stderr",
+    )
 
     args = parser.parse_args(argv)
 
@@ -120,12 +125,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(json_output)
 
     # Print human summary to stderr
-    verdict = result.get("overall_verdict")
-    if not isinstance(verdict, str):
-        verdict = "unknown"
-    summary = result.get("summary", "")
-    check_count = len(checks)
-    print(f"[{verdict.upper()}] {summary} ({check_count} check(s))", file=sys.stderr)
+    if not args.quiet:
+        verdict = result.get("overall_verdict")
+        if not isinstance(verdict, str):
+            verdict = "unknown"
+        summary = result.get("summary", "")
+        check_count = len(checks)
+        print(f"[{verdict.upper()}] {summary} ({check_count} check(s))", file=sys.stderr)
 
     return 0
 
