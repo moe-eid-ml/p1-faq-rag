@@ -165,6 +165,10 @@ class RunResult:
         }
 
 
+# Allowed schema versions for forward compatibility checks
+ALLOWED_SCHEMA_VERSIONS = frozenset({"1.0"})
+
+
 @dataclass(frozen=True)
 class EvidencePack:
     """Machine-readable evidence pack artifact for KO-scanner output.
@@ -176,10 +180,23 @@ class EvidencePack:
 
     Strict rule enforced by CheckerResult: if evidence is missing for a check,
     that check cannot be GREEN (must be YELLOW/ABSTAIN/RED).
+
+    Contract invariants (enforced at construction):
+    - schema_version must be in ALLOWED_SCHEMA_VERSIONS
+    - run_result.overall must equal worst verdict of checks (via RunResult)
+    - All evidence with offsets must have offset_basis (via EvidenceSpan)
     """
 
     run_result: RunResult
     schema_version: str = "1.0"
+
+    def __post_init__(self) -> None:
+        """Validate schema version."""
+        if self.schema_version not in ALLOWED_SCHEMA_VERSIONS:
+            raise ValueError(
+                f"EvidencePack schema_version ({self.schema_version}) not in "
+                f"allowed versions: {sorted(ALLOWED_SCHEMA_VERSIONS)}"
+            )
 
     def to_dict(self) -> Dict[str, object]:
         """Convert to JSON-serializable dict.
