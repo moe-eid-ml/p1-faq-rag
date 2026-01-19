@@ -233,6 +233,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         check_count = len(checks)
         print(f"[{overall.upper()}] {summary} ({check_count} check(s))", file=sys.stderr)
 
+        # Print compact evidence lines for pretty mode
+        if args.format == "pretty":
+            for check in checks:
+                check_id = check.get("check_id", "unknown")
+                for ev in check.get("evidence", []):
+                    snippet = ev.get("snippet", "")
+                    # Truncate snippet for display
+                    if len(snippet) > 60:
+                        snippet = snippet[:57] + "..."
+                    doc_id = ev.get("doc_id", "")
+                    page = ev.get("page", "")
+                    loc = f"{doc_id}:{page}" if doc_id and page else ""
+                    print(f"  [{check_id}] \"{snippet}\" ({loc})", file=sys.stderr)
+
     return 0
 
 
