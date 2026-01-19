@@ -32,6 +32,7 @@ class ReasonCode(str, Enum):
 
     NO_TEXT = "no_text"
     KO_PHRASE_FOUND = "ko_phrase_found"
+    KO_KEYWORD_NOT_FOUND = "ko_keyword_not_found"
     MISSING_CURRENCY = "missing_currency"
     AMBIGUOUS_REQUIREMENT = "ambiguous_requirement"
     AMBIGUOUS_THRESHOLD_COUNT = "ambiguous_threshold_count"
