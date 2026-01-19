@@ -153,6 +153,11 @@ def test_run_single_page_none_text_returns_abstain():
 # Trigger inputs that produce findings for each registered checker.
 # Derived from existing tests and checker implementations.
 _CHECKER_TRIGGER_INPUTS = {
+    "KoKeywordChecker": {
+        "text": "Die folgenden Ausschlusskriterien gelten für alle Bieter.",
+        "doc_id": "test.pdf",
+        "page_number": 1,
+    },
     "MinimalKoPhraseChecker": {
         "text": "Dies ist ein Ausschlusskriterium.",
         "doc_id": "test.pdf",

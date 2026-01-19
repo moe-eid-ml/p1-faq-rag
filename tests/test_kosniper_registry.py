@@ -1,6 +1,7 @@
 """MC-KOS-07: Registry determinism and integration tests."""
 
 from kosniper.checkers.registry import get_checker_classes
+from kosniper.checkers.ko_keyword_check import KoKeywordChecker
 from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
 from kosniper.checkers.turnover_threshold import TurnoverThresholdChecker
 from kosniper.pipeline import run_single_page
@@ -24,7 +25,7 @@ class TestRegistryDeterminism:
 
     def test_registry_order_matches_expected(self):
         """Explicit order assertion to catch accidental reordering."""
-        expected = (MinimalKoPhraseChecker, TurnoverThresholdChecker)
+        expected = (KoKeywordChecker, MinimalKoPhraseChecker, TurnoverThresholdChecker)
         assert get_checker_classes() == expected
 
     def test_no_duplicate_checkers_in_registry(self):
