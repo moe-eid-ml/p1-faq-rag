@@ -4,6 +4,7 @@ Usage:
     python -m kosniper.cli --doc-id tender.pdf --page 3 --text "Mindestumsatz 500.000 EUR"
     python -m kosniper.cli --doc-id tender.pdf --page 3 --text-file input.txt --out result.json
     python -m kosniper.cli --pdf tender.pdf --out ingest.json  (PDF ingest mode)
+    python -m kosniper.cli --pdf tender.pdf --find "Ausschlusskriterium"  (find span in PDF)
 """
 
 from __future__ import annotations
@@ -44,6 +45,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Path to PDF file for ingestion mode (mutually exclusive with --text, --text-file)",
     )
     parser.add_argument(
+        "--find",
+        help="Find substring in PDF pages and return span info (requires --pdf)",
+    )
+    parser.add_argument(
         "--out",
         help="Output file path (optional, defaults to stdout)",
     )
@@ -75,18 +80,44 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("Error: one of --text, --text-file, or --pdf is required", file=sys.stderr)
         return 2
 
+    # Validate --find requires --pdf
+    if args.find is not None and args.pdf is None:
+        print("Error: --find requires --pdf", file=sys.stderr)
+        return 2
+
     # PDF ingestion mode
     if args.pdf is not None:
         from kosniper.ingest.pdf_ingest import ingest_pdf
 
         try:
-            result = ingest_pdf(args.pdf, doc_id=args.doc_id if args.doc_id else None)
+            ingest_result = ingest_pdf(args.pdf, doc_id=args.doc_id if args.doc_id else None)
         except FileNotFoundError as e:
             print(f"Error: {e}", file=sys.stderr)
             return 2
         except ValueError as e:
             print(f"Error: {e}", file=sys.stderr)
             return 2
+
+        # If --find is specified, search for the needle in pages
+        if args.find is not None:
+            from kosniper.evidence.spans import find_span
+
+            spans = []
+            for page_info in ingest_result.get("pages", []):
+                normalized = page_info.get("normalized_text_v1", "")
+                span = find_span(normalized, args.find)
+                if span is not None:
+                    span["page"] = page_info["page"]
+                    span["doc_id"] = ingest_result["doc_id"]
+                    spans.append(span)
+
+            result = {
+                "doc_id": ingest_result["doc_id"],
+                "needle": args.find,
+                "matches": spans,
+            }
+        else:
+            result = ingest_result
 
         # Output JSON
         if args.format == "json":
@@ -101,9 +132,13 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(json_output)
 
         if not args.quiet:
-            page_count = len(result.get("pages", []))
-            doc_id = result.get("doc_id", args.pdf)
-            print(f"[INGEST] {doc_id} ({page_count} page(s))", file=sys.stderr)
+            if args.find is not None:
+                match_count = len(result.get("matches", []))
+                print(f"[FIND] '{args.find}' ({match_count} match(es))", file=sys.stderr)
+            else:
+                page_count = len(result.get("pages", []))
+                doc_id = result.get("doc_id", args.pdf)
+                print(f"[INGEST] {doc_id} ({page_count} page(s))", file=sys.stderr)
 
         return 0
 
