@@ -167,19 +167,17 @@ def main(argv: Optional[list[str]] = None) -> int:
                 for check_result in page_result.results:
                     all_checks.append(check_result.to_dict())
 
+            # MC-KOS-35: Apply evidence selection policy and validate
+            from kosniper.evidence.select import apply_evidence_policy, validate_evidence_offset_basis
+
             # Validate offset_basis for all evidence with offsets (fail-closed)
-            for check in all_checks:
-                for ev in check.get("evidence", []):
-                    has_offsets = ev.get("start_offset") is not None
-                    if has_offsets:
-                        basis = ev.get("offset_basis")
-                        if basis != "normalized_text_v1":
-                            print(
-                                f"Error: Evidence has offsets but invalid offset_basis "
-                                f"({basis!r}). Must be 'normalized_text_v1'.",
-                                file=sys.stderr,
-                            )
-                            return 2
+            error = validate_evidence_offset_basis(all_checks)
+            if error:
+                print(f"Error: {error}", file=sys.stderr)
+                return 2
+
+            # Apply evidence policy (sort, dedupe, limit, truncate)
+            all_checks = apply_evidence_policy(all_checks)
 
             # Aggregate overall verdict (worst across all pages)
             overall = worst_verdict(all_verdicts) if all_verdicts else TrafficLight.ABSTAIN
@@ -271,6 +269,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     checks = result.get("checks")
     if not isinstance(checks, list):
         checks = []
+
+    # MC-KOS-35: Apply evidence selection policy and validate
+    from kosniper.evidence.select import apply_evidence_policy, validate_evidence_offset_basis
+
+    error = validate_evidence_offset_basis(checks)
+    if error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 2
+
+    checks = apply_evidence_policy(checks)
+    result["checks"] = checks
 
     # Allowed verdict values (fail-closed: reject unknown)
     allowed_verdicts = {"red", "yellow", "abstain", "green"}
