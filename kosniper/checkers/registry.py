@@ -14,12 +14,14 @@ def get_checker_classes() -> Tuple[Type[Checker], ...]:
     Returns a tuple (immutable) to prevent accidental mutation.
     Lazy imports inside function to avoid circular dependencies.
     """
+    from kosniper.checkers.ko_exclusion_phrase_check import KoExclusionPhraseChecker
     from kosniper.checkers.ko_keyword_check import KoKeywordChecker
     from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
     from kosniper.checkers.turnover_threshold import TurnoverThresholdChecker
 
     return (
         KoKeywordChecker,
+        KoExclusionPhraseChecker,
         MinimalKoPhraseChecker,
         TurnoverThresholdChecker,
     )
