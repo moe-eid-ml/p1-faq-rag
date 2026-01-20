@@ -28,12 +28,12 @@ class TestTurnoverCheckerWiring:
         assert len(turnover_results) == 1
         assert turnover_results[0].reason == "missing_company_turnover"
 
-    def test_no_ko_signals_yields_green(self):
-        """AC3: No turnover phrase and no KO phrase => overall GREEN."""
+    def test_no_ko_signals_yields_abstain(self):
+        """AC3: No turnover phrase and no KO phrase => overall ABSTAIN (never false-green)."""
         text = "Bitte reichen Sie Ihre Unterlagen vollständig ein."
         company_profile = {"annual_turnover_eur": 1_000_000}
         result = run_single_page(text, "doc.pdf", 1, company_profile)
-        assert result.overall == TrafficLight.GREEN
+        assert result.overall == TrafficLight.ABSTAIN
         # No findings from either checker
         assert len(result.results) == 0
 
@@ -97,6 +97,6 @@ class TestCompanyProfilePassthrough:
         result_below = run_single_page(text, "doc.pdf", 1, {"annual_turnover_eur": 400_000})
         assert result_below.overall == TrafficLight.RED
 
-        # Meets threshold -> GREEN (no KO phrase, turnover met)
+        # Meets threshold -> ABSTAIN (no findings, never false-green)
         result_meets = run_single_page(text, "doc.pdf", 1, {"annual_turnover_eur": 600_000})
-        assert result_meets.overall == TrafficLight.GREEN
+        assert result_meets.overall == TrafficLight.ABSTAIN

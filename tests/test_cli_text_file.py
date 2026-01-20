@@ -135,19 +135,18 @@ class TestCliTextFileAdversarial:
                 # Non-green is acceptable (ABSTAIN expected for empty)
                 assert data["overall_verdict"] in ("yellow", "red", "abstain")
 
-    def test_adversarial_neutral_text_rejects_false_green(self):
-        """ADVERSARIAL: Neutral text triggers safe-fail (exit 2)."""
+    def test_adversarial_neutral_text_returns_abstain(self):
+        """ADVERSARIAL: Neutral text returns ABSTAIN, never false-green."""
         result = _run_cli([
             "--doc-id", "test.pdf",
             "--page", "1",
             "--text-file", str(SAMPLES_DIR / "tender_neutral.txt"),
         ])
 
-        # CLI rejects GREEN without evidence
-        assert result.returncode == 2, (
-            f"Expected exit 2 for GREEN without evidence, got {result.returncode}"
-        )
-        assert "GREEN without evidence" in result.stderr
+        # Pipeline returns ABSTAIN for no findings (never false-green)
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert data["overall_verdict"] == "abstain"
 
     def test_adversarial_missing_file_error(self):
         """ADVERSARIAL: Missing file returns error, not crash."""

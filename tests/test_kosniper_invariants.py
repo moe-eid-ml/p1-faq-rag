@@ -31,9 +31,10 @@ def test_non_neutral_results_include_evidence():
     assert abstain_result.status == TrafficLight.ABSTAIN
 
 
-def test_non_empty_text_without_requirements_is_green():
+def test_non_empty_text_without_findings_is_abstain():
+    """No findings from any checker => ABSTAIN (never false-green)."""
     result = run_single_page("Bitte reichen Sie Ihr Angebot ein.", "doc.pdf", 1)
-    assert result.overall == TrafficLight.GREEN
+    assert result.overall == TrafficLight.ABSTAIN
     assert result.results == []
 
 
