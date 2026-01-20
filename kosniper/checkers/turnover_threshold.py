@@ -209,8 +209,11 @@ class TurnoverThresholdChecker(Checker):
 
         # Check for currency marker near turnover keywords
         has_currency_near_keyword = False
+        first_kw_match = None  # Track first keyword match for evidence
         for keyword in self.TURNOVER_KEYWORDS:
             for match in re.finditer(re.escape(keyword), text_lower):
+                if first_kw_match is None:
+                    first_kw_match = match
                 window_start = max(0, match.start() - 120)
                 window_end = min(len(normalized), match.end() + 120)
                 window = text_lower[window_start:window_end]
@@ -222,16 +225,15 @@ class TurnoverThresholdChecker(Checker):
 
         if not has_currency_near_keyword:
             # Turnover keyword but no currency -> YELLOW missing_currency
-            # Find snippet around first turnover keyword
-            for keyword in self.TURNOVER_KEYWORDS:
-                match = re.search(re.escape(keyword), text_lower)
-                if match:
-                    snippet_start = max(0, match.start() - 40)
-                    snippet_end = min(len(normalized), match.end() + 80)
-                    snippet = normalized[snippet_start:snippet_end].strip()
-                    break
+            # Use first keyword match for evidence (already captured above)
+            if first_kw_match is not None:
+                kw_start, kw_end = first_kw_match.start(), first_kw_match.end()
+                snippet_start = max(0, kw_start - 40)
+                snippet_end = min(len(normalized), kw_end + 80)
+                snippet = normalized[snippet_start:snippet_end].strip()
             else:
-                snippet = normalized[:120]
+                # Fallback (should not happen given has_turnover_keyword check)
+                return None
 
             return CheckerResult(
                 checker_name=self.name,
@@ -242,6 +244,9 @@ class TurnoverThresholdChecker(Checker):
                         doc_id=doc_id,
                         page_number=page_number,
                         snippet=snippet,
+                        start_offset=kw_start,
+                        end_offset=kw_end,
+                        offset_basis="normalized_text_v1",
                     )
                 ],
             )
@@ -252,12 +257,14 @@ class TurnoverThresholdChecker(Checker):
             for keyword in self.TURNOVER_KEYWORDS:
                 match = re.search(re.escape(keyword), text_lower)
                 if match:
-                    snippet_start = max(0, match.start() - 40)
-                    snippet_end = min(len(normalized), match.end() + 80)
+                    kw_start, kw_end = match.start(), match.end()
+                    snippet_start = max(0, kw_start - 40)
+                    snippet_end = min(len(normalized), kw_end + 80)
                     snippet = normalized[snippet_start:snippet_end].strip()
                     break
             else:
-                snippet = normalized[:120]
+                # No keyword match found (should not happen) -> no evidence
+                return None
 
             return CheckerResult(
                 checker_name=self.name,
@@ -268,13 +275,28 @@ class TurnoverThresholdChecker(Checker):
                         doc_id=doc_id,
                         page_number=page_number,
                         snippet=snippet,
+                        start_offset=kw_start,
+                        end_offset=kw_end,
+                        offset_basis="normalized_text_v1",
                     )
                 ],
             )
 
         # Check for multiple scope qualifiers
         if self._has_multiple_scope_qualifiers(normalized):
-            snippet = normalized[:120]
+            # Find first turnover keyword for offsets
+            for keyword in self.TURNOVER_KEYWORDS:
+                match = re.search(re.escape(keyword), text_lower)
+                if match:
+                    kw_start, kw_end = match.start(), match.end()
+                    snippet_start = max(0, kw_start - 40)
+                    snippet_end = min(len(normalized), kw_end + 80)
+                    snippet = normalized[snippet_start:snippet_end].strip()
+                    break
+            else:
+                # No keyword match (should not happen) -> no evidence
+                return None
+
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
@@ -284,6 +306,9 @@ class TurnoverThresholdChecker(Checker):
                         doc_id=doc_id,
                         page_number=page_number,
                         snippet=snippet,
+                        start_offset=kw_start,
+                        end_offset=kw_end,
+                        offset_basis="normalized_text_v1",
                     )
                 ],
             )
@@ -297,6 +322,7 @@ class TurnoverThresholdChecker(Checker):
 
         if len(requirements) > 1:
             # Multiple thresholds -> YELLOW ambiguous
+            _, snippet, kw_start, kw_end = requirements[0]
             return CheckerResult(
                 checker_name=self.name,
                 status=TrafficLight.YELLOW,
@@ -305,13 +331,16 @@ class TurnoverThresholdChecker(Checker):
                     EvidenceSpan(
                         doc_id=doc_id,
                         page_number=page_number,
-                        snippet=requirements[0][1],
+                        snippet=snippet,
+                        start_offset=kw_start,
+                        end_offset=kw_end,
+                        offset_basis="normalized_text_v1",
                     )
                 ],
             )
 
         # Single unambiguous threshold
-        threshold_eur, snippet, _, _ = requirements[0]
+        threshold_eur, snippet, kw_start, kw_end = requirements[0]
 
         # Check company profile
         if company_profile is None or "annual_turnover_eur" not in company_profile:
@@ -324,6 +353,9 @@ class TurnoverThresholdChecker(Checker):
                         doc_id=doc_id,
                         page_number=page_number,
                         snippet=snippet,
+                        start_offset=kw_start,
+                        end_offset=kw_end,
+                        offset_basis="normalized_text_v1",
                     )
                 ],
             )
@@ -339,6 +371,9 @@ class TurnoverThresholdChecker(Checker):
                         doc_id=doc_id,
                         page_number=page_number,
                         snippet=snippet,
+                        start_offset=kw_start,
+                        end_offset=kw_end,
+                        offset_basis="normalized_text_v1",
                     )
                 ],
             )
@@ -354,6 +389,9 @@ class TurnoverThresholdChecker(Checker):
                         doc_id=doc_id,
                         page_number=page_number,
                         snippet=snippet,
+                        start_offset=kw_start,
+                        end_offset=kw_end,
+                        offset_basis="normalized_text_v1",
                     )
                 ],
             )
