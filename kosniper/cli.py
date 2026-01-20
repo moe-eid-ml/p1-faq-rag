@@ -133,16 +133,29 @@ def main(argv: Optional[list[str]] = None) -> int:
         elif args.scan:
             # MC-KOS-31: PDF scan mode - run checkers on all pages
             # Ordering: page order (1, 2, ...) × registry order (deterministic)
+            import hashlib
+
             from kosniper.pipeline import run_single_page
             from kosniper.contracts import worst_verdict, TrafficLight
 
             doc_id = ingest_result["doc_id"]
             all_checks = []
             all_verdicts = []
+            page_map_entries = []
 
             for page_info in ingest_result.get("pages", []):
                 page_num = page_info["page"]
+                raw_text = page_info.get("raw_text", "")
                 normalized = page_info.get("normalized_text_v1", "")
+
+                # Build page map entry for provenance
+                page_map_entries.append({
+                    "page_number": page_num,
+                    "raw_text_sha256": hashlib.sha256(raw_text.encode("utf-8")).hexdigest(),
+                    "normalized_text_sha256": hashlib.sha256(normalized.encode("utf-8")).hexdigest(),
+                    "char_count_raw": len(raw_text),
+                    "char_count_normalized": len(normalized),
+                })
 
                 page_result = run_single_page(
                     text=normalized,
@@ -181,12 +194,23 @@ def main(argv: Optional[list[str]] = None) -> int:
             else:
                 summary = "No KO signal detected."
 
+            # MC-KOS-34: Build document_map for provenance
+            document_map = {
+                "doc_id": doc_id,
+                "offset_basis": "normalized_text_v1",
+                "pages": page_map_entries,
+            }
+            # Compute overall_sha256 from canonical JSON (sorted keys, no whitespace)
+            map_json = json.dumps(document_map, sort_keys=True, separators=(",", ":"))
+            document_map["overall_sha256"] = hashlib.sha256(map_json.encode("utf-8")).hexdigest()
+
             result = {
                 "schema_version": "1.0",
                 "verdict": overall.value,
                 "overall_verdict": overall.value,
                 "summary": summary,
                 "checks": all_checks,
+                "document_map": document_map,
             }
         else:
             result = ingest_result
