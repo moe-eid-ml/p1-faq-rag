@@ -235,6 +235,8 @@ class TestEvidenceFormat:
         assert ev.snippet
         assert "500" in ev.snippet or "mindestumsatz" in ev.snippet.lower()
         # Offsets should be None (v0)
+        if ev.start_offset is not None or ev.end_offset is not None:
+            pytest.xfail("legacy suite assumes v0 no offsets; replaced by MC-KOS-36 offsets tests")
         assert ev.start_offset is None
         assert ev.end_offset is None
 
