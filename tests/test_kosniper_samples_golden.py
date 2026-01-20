@@ -201,12 +201,11 @@ class TestGoldenProvenanceFields:
 class TestGoldenSafetyInvariants:
     """Tests for CLI safety invariants."""
 
-    def test_neutral_sample_rejects_green_without_evidence(self):
-        """Neutral sample: CLI rejects GREEN without evidence (safe-fail)."""
+    def test_neutral_sample_returns_abstain(self):
+        """Neutral sample: returns ABSTAIN (never false-green)."""
         result = _run_cli_with_sample("tender_neutral.txt", "tender_neutral.pdf", 1)
 
-        # CLI must reject GREEN without evidence
-        assert result.returncode == 2, (
-            f"Expected exit 2 for GREEN without evidence, got {result.returncode}"
-        )
-        assert "GREEN without evidence" in result.stderr
+        # Pipeline returns ABSTAIN for no findings
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert data["overall_verdict"] == "abstain"

@@ -77,6 +77,6 @@ class TestPipelineIntegration:
         result2 = run_single_page(text, "doc.pdf", 1, {"annual_turnover_eur": 600_000})
         assert result2.overall == TrafficLight.YELLOW
 
-        # GREEN when no findings
+        # ABSTAIN when no findings (never false-green)
         result3 = run_single_page("Bitte reichen Sie Ihre Unterlagen ein.", "doc.pdf", 1)
-        assert result3.overall == TrafficLight.GREEN
+        assert result3.overall == TrafficLight.ABSTAIN

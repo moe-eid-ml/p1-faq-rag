@@ -243,8 +243,8 @@ class TestMakeEvidencePack:
         assert turnover_checks[0]["evidence"][0]["doc_id"] == "tender.pdf"
         assert turnover_checks[0]["evidence"][0]["page"] == 5
 
-    def test_make_evidence_pack_green_has_empty_checks(self):
-        """GREEN verdict has empty checks list (no signals detected)."""
+    def test_make_evidence_pack_no_findings_has_empty_checks(self):
+        """No findings => ABSTAIN verdict with empty checks (never false-green)."""
         pack = make_evidence_pack(
             text="Bitte reichen Sie Ihre Unterlagen ein.",
             doc_id="doc.pdf",
@@ -255,8 +255,8 @@ class TestMakeEvidencePack:
         d = pack.to_dict()
         checks = d.get("checks")
         assert isinstance(checks, list)
-        assert d["verdict"] == "green"
-        assert d["overall_verdict"] == "green"
+        assert d["verdict"] == "abstain"
+        assert d["overall_verdict"] == "abstain"
         assert checks == []
 
     def test_make_evidence_pack_multiple_checks(self):

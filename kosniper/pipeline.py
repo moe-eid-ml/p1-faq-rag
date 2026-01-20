@@ -42,10 +42,10 @@ def run_single_page(
 
     # Aggregate results
     if not results:
-        # No findings from any checker -> GREEN
+        # No findings from any checker -> ABSTAIN (never false-green)
         return RunResult(
-            overall=TrafficLight.GREEN,
-            summary="No KO signal detected.",
+            overall=TrafficLight.ABSTAIN,
+            summary="No checker produced findings; manual review required.",
             results=[],
         )
 
