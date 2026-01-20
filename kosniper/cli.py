@@ -5,6 +5,7 @@ Usage:
     python -m kosniper.cli --doc-id tender.pdf --page 3 --text-file input.txt --out result.json
     python -m kosniper.cli --pdf tender.pdf --out ingest.json  (PDF ingest mode)
     python -m kosniper.cli --pdf tender.pdf --find "Ausschlusskriterium"  (find span in PDF)
+    python -m kosniper.cli --pdf tender.pdf --scan --out result.json  (PDF scan mode)
 """
 
 from __future__ import annotations
@@ -49,6 +50,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Find substring in PDF pages and return span info (requires --pdf)",
     )
     parser.add_argument(
+        "--scan",
+        action="store_true",
+        help="Run KO scanner on all PDF pages (requires --pdf, mutually exclusive with --find)",
+    )
+    parser.add_argument(
         "--out",
         help="Output file path (optional, defaults to stdout)",
     )
@@ -85,6 +91,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("Error: --find requires --pdf", file=sys.stderr)
         return 2
 
+    # Validate --scan requires --pdf and is mutually exclusive with --find
+    if args.scan and args.pdf is None:
+        print("Error: --scan requires --pdf", file=sys.stderr)
+        return 2
+    if args.scan and args.find is not None:
+        print("Error: --scan and --find are mutually exclusive", file=sys.stderr)
+        return 2
+
     # PDF ingestion mode
     if args.pdf is not None:
         from kosniper.ingest.pdf_ingest import ingest_pdf
@@ -116,6 +130,64 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "needle": args.find,
                 "matches": spans,
             }
+        elif args.scan:
+            # MC-KOS-31: PDF scan mode - run checkers on all pages
+            # Ordering: page order (1, 2, ...) × registry order (deterministic)
+            from kosniper.pipeline import run_single_page
+            from kosniper.contracts import worst_verdict, TrafficLight
+
+            doc_id = ingest_result["doc_id"]
+            all_checks = []
+            all_verdicts = []
+
+            for page_info in ingest_result.get("pages", []):
+                page_num = page_info["page"]
+                normalized = page_info.get("normalized_text_v1", "")
+
+                page_result = run_single_page(
+                    text=normalized,
+                    doc_id=doc_id,
+                    page_number=page_num,
+                )
+
+                all_verdicts.append(page_result.overall)
+                for check_result in page_result.results:
+                    all_checks.append(check_result.to_dict())
+
+            # Validate offset_basis for all evidence with offsets (fail-closed)
+            for check in all_checks:
+                for ev in check.get("evidence", []):
+                    has_offsets = ev.get("start_offset") is not None
+                    if has_offsets:
+                        basis = ev.get("offset_basis")
+                        if basis != "normalized_text_v1":
+                            print(
+                                f"Error: Evidence has offsets but invalid offset_basis "
+                                f"({basis!r}). Must be 'normalized_text_v1'.",
+                                file=sys.stderr,
+                            )
+                            return 2
+
+            # Aggregate overall verdict (worst across all pages)
+            overall = worst_verdict(all_verdicts) if all_verdicts else TrafficLight.ABSTAIN
+
+            # Generate summary
+            if overall == TrafficLight.RED:
+                summary = "Hard KO detected; disqualification likely."
+            elif overall == TrafficLight.YELLOW:
+                summary = "Possible KO signal detected; review evidence."
+            elif overall == TrafficLight.ABSTAIN:
+                summary = "Insufficient data to assess; manual review required."
+            else:
+                summary = "No KO signal detected."
+
+            result = {
+                "schema_version": "1.0",
+                "verdict": overall.value,
+                "overall_verdict": overall.value,
+                "summary": summary,
+                "checks": all_checks,
+            }
         else:
             result = ingest_result
 
@@ -135,6 +207,11 @@ def main(argv: Optional[list[str]] = None) -> int:
             if args.find is not None:
                 match_count = len(result.get("matches", []))
                 print(f"[FIND] '{args.find}' ({match_count} match(es))", file=sys.stderr)
+            elif args.scan:
+                overall = result.get("overall_verdict", "unknown")
+                summary = result.get("summary", "")
+                check_count = len(result.get("checks", []))
+                print(f"[{overall.upper()}] {summary} ({check_count} check(s))", file=sys.stderr)
             else:
                 page_count = len(result.get("pages", []))
                 doc_id = result.get("doc_id", args.pdf)
