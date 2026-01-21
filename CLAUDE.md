@@ -11,6 +11,13 @@ Non-negotiables:
 - Safe-fail: uncertain -> Yellow/Abstain. Never false-green. Never fabricate evidence.
 - Schema changes additive only: new fields optional + defaulted.
 - New checkers must not overlap existing trigger keywords/patterns (avoid changing existing test expectations).
+- No refactor without its own Mission Card.
+- No new dependencies without explicit user approval.
+
+Stop rules (fail-closed):
+- Cannot cite file+symbol+quote → say `NEED FILE: <path>` and stop.
+- Change touches unlisted files → refuse, request updated Mission Card.
+- Adding dependency → stop, request approval.
 
 Working style:
 - Start with a short plan + file list.

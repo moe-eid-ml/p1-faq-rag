@@ -213,6 +213,7 @@ make ask Q="Bearbeitungszeit Wohngeld?" MODE=Hybrid K=5
 
 ## KOSniper (v0.1)
 
+<<<<<<< HEAD
 This repo contains two sibling tools: the Wohngeld FAQ RAG and KOSniper.
 KOSniper is the “proof-first” tender scanner module living under `kosniper/`.
 
@@ -236,3 +237,19 @@ python -m kosniper.cli --pdf tests/fixtures/fixture_neutral.pdf --scan
 - **Offset basis:** offsets are relative to `normalized_text_v1` (fail-closed if missing)
 - **Document map:** `document_map` includes per-page SHA256 hashes for provenance
 - **Deterministic CI:** `DISABLE_SEMANTIC=1 pytest -q` (no network, no embeddings)
+=======
+Bidder-side KO scanner for German public tenders. Proof-first, never false-green.
+
+```bash
+python -m kosniper.cli --pdf tests/fixtures/fixture_ko_page2.pdf --scan  # RED
+python -m kosniper.cli --pdf tests/fixtures/fixture_neutral.pdf --scan   # ABSTAIN
+```
+
+Or run `./scripts/demo.sh` to generate `evidence_pack.json`.
+
+### Output Contract
+- **Verdict:** `green` | `yellow` | `red` | `abstain` (never green without evidence)
+- **Worst-check-wins:** overall_verdict = worst verdict across all checks
+- **Offset basis:** when offsets exist, offset_basis must be set (standard: `normalized_text_v1`)
+- **Deterministic CI:** `ruff check . && python -m compileall -q . && DISABLE_SEMANTIC=1 pytest -q`
+>>>>>>> c65a4e8 (MC-DOC-01: harden guardrails + contract spine)
