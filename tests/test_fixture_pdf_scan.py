@@ -39,6 +39,8 @@ class TestFixturePdfScan:
         red_checks = [c for c in output["checks"] if c["verdict"] == "red"]
         assert len(red_checks) >= 1
 
+        assert "evidence" in red_checks[0], "Red check missing 'evidence' key"
+        assert len(red_checks[0]["evidence"]) >= 1, "Red check has no evidence items"
         ev = red_checks[0]["evidence"][0]
         assert ev["page"] == 2
         assert ev["offset_basis"] == "normalized_text_v1"
