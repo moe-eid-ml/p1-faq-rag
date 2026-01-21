@@ -211,11 +211,28 @@ make ask Q="Welche Unterlagen brauche ich für den Wohngeldantrag?"
 make ask Q="Bearbeitungszeit Wohngeld?" MODE=Hybrid K=5
 ```
 
-## KOSniper Demo
+## KOSniper (v0.1)
 
-Run the KO-scanner on a sample tender and generate an evidence pack:
+This repo contains two sibling tools: the Wohngeld FAQ RAG and KOSniper.
+KOSniper is the “proof-first” tender scanner module living under `kosniper/`.
+
+Bidder-side KO scanner for German public tenders. Deterministic, proof-first, never false-green.
+
+### Quickstart
 
 ```bash
-./scripts/demo.sh
-# Output: evidence_pack.json (JSON with overall_verdict + checks)
+# RED verdict (KO phrase on page 2)
+python -m kosniper.cli --pdf tests/fixtures/fixture_ko_page2.pdf --scan
+
+# ABSTAIN verdict (no KO signals)
+python -m kosniper.cli --pdf tests/fixtures/fixture_neutral.pdf --scan
 ```
+
+### Output Contract
+
+- **Verdict:** `red` | `yellow` | `abstain` (never `green` without evidence)
+- **Worst-check wins:** `overall_verdict` = worst verdict across all checks
+- **Evidence spans:** each check includes `evidence[]` with `doc_id`, `page`, `snippet`, `start_offset`, `end_offset`, `offset_basis`
+- **Offset basis:** offsets are relative to `normalized_text_v1` (fail-closed if missing)
+- **Document map:** `document_map` includes per-page SHA256 hashes for provenance
+- **Deterministic CI:** `DISABLE_SEMANTIC=1 pytest -q` (no network, no embeddings)
