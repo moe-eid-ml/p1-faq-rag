@@ -21,3 +21,6 @@ Run codex sync and commit.
 
 ## Security
 No secrets in git. Use .env (ignored).
+
+## Start Here
+Contributor start: `docs/README.md`.

@@ -10,8 +10,11 @@ This is the only always-true project spine. Keep it short. Everything else belon
 
 ## Output contract
 - Traffic light overall + per-check breakdown.
+- Verdict enum: green | yellow | red | abstain (never green without evidence).
 - Evidence per check: doc_id + page + snippet.
 - Offsets/bbox are optional and additive (never required, never fabricated).
+- **Worst-check-wins:** overall_verdict = worst verdict across all checks.
+- **Offset basis:** when offsets exist, offset_basis must be set (current standard: `normalized_text_v1`).
 
 ## Workflow (safe but fast)
 - One intent per PR.
@@ -19,6 +22,7 @@ This is the only always-true project spine. Keep it short. Everything else belon
 - Run once near the end: DISABLE_SEMANTIC=1 pytest -q
 - CI must be green before merge.
 - Extras go to docs/parking-lot.md, not the diff.
+- No refactor without its own Mission Card; no new deps without approval (see CLAUDE.md).
 
 ## Roles
 - ChatGPT: mission cards, scope police, final review, learning prompts.

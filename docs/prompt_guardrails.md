@@ -9,7 +9,9 @@ Use this header at the top of any Codex / OpenCode / Opus / Claude prompt.
 4) Determinism only: no network/time/randomness.
 5) Safe-fail: if uncertain, force Yellow/Abstain (never confident green without evidence).
 6) Schema/contract changes must be additive: new fields optional + defaulted.
-7) Don’t “fix” failures by weakening invariants.
+7) Don't "fix" failures by weakening invariants.
+8) No new dependencies without explicit approval.
+9) No refactor without its own Mission Card.
 
 ## Required output format
 A) Verified findings (with evidence)
@@ -23,3 +25,12 @@ C) Recommendation (max 3) with:
 ## Code patch rules
 - Every import/symbol must exist in-repo (or request the file).
 - Prefer tests-first. If you change behavior, add the test that would fail without it.
+
+## Verification table
+| Model claims... | Verify by running |
+|-----------------|-------------------|
+| "Tests pass" | `DISABLE_SEMANTIC=1 pytest -q` |
+| "Lint passes" | `ruff check .` |
+| "Compiles" | `python -m compileall -q .` |
+| "Symbol exists" | `rg "<symbol>" -S .` |
+| "Safe-fail" | Uncertain input → Yellow/Abstain, not Green |

@@ -7,5 +7,6 @@ If you are an AI assistant or a contributor:
 3) When opening PRs, follow `.github/pull_request_template.md`.
 
 Rules:
-- If you can’t access repo files, say: `NEED FILE: <path>` and ask the user to paste it.
+- If you can't access repo files, say: `NEED FILE: <path>` and ask the user to paste it.
 - Keep scope: one intent per PR. Extras go to `docs/parking-lot.md`.
+- For Mission Card workflow, see `missions/README.md`.
