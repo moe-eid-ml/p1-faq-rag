@@ -73,6 +73,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         action="store_true",
         help="Suppress human summary output to stderr",
     )
+    parser.add_argument(
+        "--out-dir",
+        help="Output directory for report pack (report.md + evidence_pack.json; requires --scan)",
+    )
 
     args = parser.parse_args(argv)
 
@@ -101,6 +105,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
     if args.scan and args.find is not None:
         print("Error: --scan and --find are mutually exclusive", file=sys.stderr)
+        return 2
+
+    # MC-KOS-43: Validate --out-dir requires --scan
+    if args.out_dir is not None and not args.scan:
+        print("Error: --out-dir requires --scan", file=sys.stderr)
         return 2
 
     # PDF ingestion mode
@@ -293,6 +302,39 @@ def main(argv: Optional[list[str]] = None) -> int:
                 f.write("\n")
         else:
             print(json_output)
+
+        # MC-KOS-43: Write report pack to --out-dir (scan mode only)
+        if args.out_dir is not None and args.scan:
+            from kosniper.export.report_md import render_report
+
+            try:
+                os.makedirs(args.out_dir, exist_ok=True)
+
+                # Write evidence_pack.json
+                pack_path = os.path.join(args.out_dir, "evidence_pack.json")
+                with open(pack_path, "w", encoding="utf-8") as f:
+                    json.dump(result, f, indent=2, ensure_ascii=False)
+                    f.write("\n")
+
+                # Write report.md
+                report_path = os.path.join(args.out_dir, "report.md")
+                report_md = render_report(result)
+                with open(report_path, "w", encoding="utf-8") as f:
+                    f.write(report_md)
+
+                # Write document_map.json if present
+                doc_map = result.get("document_map")
+                if doc_map:
+                    map_path = os.path.join(args.out_dir, "document_map.json")
+                    with open(map_path, "w", encoding="utf-8") as f:
+                        json.dump(doc_map, f, indent=2, ensure_ascii=False)
+                        f.write("\n")
+            except OSError as e:
+                print(f"Error writing report pack: {e}", file=sys.stderr)
+                return 2
+
+            if not args.quiet:
+                print(f"[REPORT] Written to {args.out_dir}/", file=sys.stderr)
 
         if not args.quiet:
             if args.find is not None:

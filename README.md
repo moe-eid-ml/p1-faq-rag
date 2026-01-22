@@ -218,6 +218,9 @@ Bidder-side KO scanner for German public tenders. Proof-first, never false-green
 ```bash
 python -m kosniper.cli --pdf tests/fixtures/fixture_ko_page2.pdf --scan  # RED
 python -m kosniper.cli --pdf tests/fixtures/fixture_neutral.pdf --scan   # ABSTAIN
+
+# Export report pack (report.md + evidence_pack.json + document_map.json)
+python -m kosniper.cli --pdf tender.pdf --scan --out-dir ./report_pack
 ```
 
 Or run `./scripts/demo.sh` to generate `evidence_pack.json`.
