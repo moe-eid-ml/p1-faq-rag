@@ -5,6 +5,13 @@
 - (planned) CI badge + README polish (complete)
 - (planned) Add "Hybrid" tweaks & better eval set (20 DE queries)
 
+## [v0.1.3] — 2026-01-22
+### Added
+- MC-KOS-40: Scan limits (MAX_PDF_BYTES=50MB, MAX_SCAN_PAGES=500) with fail-closed Yellow
+- MC-KOS-40: Regex-safe span finding with MAX_SPAN_SEARCH_CHARS=100K truncation guard
+- MC-KOS-40: SCAN_LIMIT_EXCEEDED reason code for limit-hit evidence
+- MC-KOS-41: Release checklist and v1 criteria in docs/RELEASE.md
+
 ## [v0.1.2] — 2026-01-21
 ### Added
 - PDF ingestion with `normalized_text_v1` and per-page SHA256 hashes
