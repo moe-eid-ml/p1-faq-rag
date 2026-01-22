@@ -11,6 +11,7 @@
 - MC-KOS-40: Regex-safe span finding with MAX_SPAN_SEARCH_CHARS=100K truncation guard
 - MC-KOS-40: SCAN_LIMIT_EXCEEDED reason code for limit-hit evidence
 - MC-KOS-41: Release checklist and v1 criteria in docs/RELEASE.md
+- MC-KOS-42: Golden e2e tests locking v1 invariants (worst-check-wins, document_map, never-false-green, offset_basis)
 
 ## [v0.1.2] — 2026-01-21
 ### Added
