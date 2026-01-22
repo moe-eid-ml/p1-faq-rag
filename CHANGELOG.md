@@ -12,6 +12,7 @@
 - MC-KOS-40: SCAN_LIMIT_EXCEEDED reason code for limit-hit evidence
 - MC-KOS-41: Release checklist and v1 criteria in docs/RELEASE.md
 - MC-KOS-42: Golden e2e tests locking v1 invariants (worst-check-wins, document_map, never-false-green, offset_basis)
+- MC-KOS-43: Export report pack (`--out-dir`) with report.md, evidence_pack.json, document_map.json
 
 ## [v0.1.2] — 2026-01-21
 ### Added
