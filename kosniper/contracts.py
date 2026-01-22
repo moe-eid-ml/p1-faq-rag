@@ -38,6 +38,7 @@ class ReasonCode(str, Enum):
     AMBIGUOUS_THRESHOLD_COUNT = "ambiguous_threshold_count"
     MISSING_COMPANY_TURNOVER = "missing_company_turnover"
     BELOW_THRESHOLD = "below_threshold"
+    SCAN_LIMIT_EXCEEDED = "scan_limit_exceeded"
 
 
 @dataclass(frozen=True)

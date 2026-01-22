@@ -9,6 +9,9 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+# MC-KOS-40: Guard against pathological input / ReDoS
+MAX_SPAN_SEARCH_CHARS = 100_000
+
 
 def make_snippet(text: str, start: int, end: int, window: int = 80) -> str:
     """Extract a snippet with context window around a match.
@@ -46,7 +49,9 @@ def find_span(
     if not text or not needle:
         return None
 
-    search_text = text.lower() if casefold else text
+    # MC-KOS-40: Truncate to prevent pathological input issues
+    truncated = text[:MAX_SPAN_SEARCH_CHARS]
+    search_text = truncated.lower() if casefold else truncated
     search_needle = needle.lower() if casefold else needle
 
     idx = search_text.find(search_needle)
@@ -55,6 +60,10 @@ def find_span(
 
     start = idx
     end = idx + len(needle)
+
+    # Ensure offsets are valid within original text bounds
+    if end > len(text):
+        return None
 
     return {
         "start": start,
@@ -83,8 +92,11 @@ def find_span_regex(
     if not text or not pattern:
         return None
 
+    # MC-KOS-40: Truncate to prevent pathological input / ReDoS
+    truncated = text[:MAX_SPAN_SEARCH_CHARS]
+
     try:
-        match = re.search(pattern, text, flags=flags)
+        match = re.search(pattern, truncated, flags=flags)
     except re.error:
         return None
 
@@ -92,6 +104,10 @@ def find_span_regex(
         return None
 
     start, end = match.span()
+
+    # Ensure offsets are valid within original text bounds
+    if end > len(text):
+        return None
 
     return {
         "start": start,
@@ -120,7 +136,9 @@ def find_all_spans(
     if not text or not needle:
         return []
 
-    search_text = text.lower() if casefold else text
+    # MC-KOS-40: Truncate to prevent pathological input issues
+    truncated = text[:MAX_SPAN_SEARCH_CHARS]
+    search_text = truncated.lower() if casefold else truncated
     search_needle = needle.lower() if casefold else needle
 
     results = []
@@ -133,6 +151,11 @@ def find_all_spans(
 
         start = idx
         end = idx + len(needle)
+
+        # Ensure offsets are valid within original text bounds
+        if end > len(text):
+            break
+
         results.append({
             "start": start,
             "end": end,
