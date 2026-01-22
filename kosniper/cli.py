@@ -17,6 +17,10 @@ from typing import Optional
 
 from kosniper.pipeline import make_evidence_pack
 
+# MC-KOS-40: Scan limits to prevent DoS / OOM
+MAX_PDF_BYTES = 50_000_000  # 50 MB
+MAX_SCAN_PAGES = 500
+
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Run KO scanner CLI and output EvidencePack JSON."""
@@ -101,7 +105,55 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     # PDF ingestion mode
     if args.pdf is not None:
+        import os
         from kosniper.ingest.pdf_ingest import ingest_pdf
+
+        # MC-KOS-40: Check file size limit
+        try:
+            file_size = os.path.getsize(args.pdf)
+        except OSError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 2
+
+        if file_size > MAX_PDF_BYTES:
+            # Fail-closed with Yellow verdict (never Green without evidence)
+            from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
+            limit_check = CheckerResult(
+                checker_name="ScanLimitGuard",
+                status=TrafficLight.YELLOW,
+                reason=ReasonCode.SCAN_LIMIT_EXCEEDED,
+                evidence=[EvidenceSpan(
+                    doc_id=args.pdf,
+                    page_number=0,
+                    snippet=f"SCAN_ABORTED: file_size={file_size} exceeds max_bytes={MAX_PDF_BYTES}",
+                )],
+            )
+            doc_id = args.doc_id if args.doc_id else os.path.basename(args.pdf)
+            result = {
+                "schema_version": "1.0",
+                "verdict": "yellow",
+                "overall_verdict": "yellow",
+                "summary": "Scan aborted: file size limit exceeded.",
+                "checks": [limit_check.to_dict()],
+                "document_map": {
+                    "doc_id": doc_id,
+                    "offset_basis": "normalized_text_v1",
+                    "pages": [],
+                    "overall_sha256": None,
+                },
+            }
+            if args.format == "json":
+                json_output = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
+            else:
+                json_output = json.dumps(result, indent=2, ensure_ascii=False)
+            if args.out:
+                with open(args.out, "w", encoding="utf-8") as f:
+                    f.write(json_output + "\n")
+            else:
+                print(json_output)
+            if not args.quiet:
+                print("Overall: yellow (file size limit exceeded)", file=sys.stderr)
+            return 0
 
         try:
             ingest_result = ingest_pdf(args.pdf, doc_id=args.doc_id if args.doc_id else None)
@@ -136,14 +188,31 @@ def main(argv: Optional[list[str]] = None) -> int:
             import hashlib
 
             from kosniper.pipeline import run_single_page
-            from kosniper.contracts import worst_verdict, TrafficLight
+            from kosniper.contracts import worst_verdict, TrafficLight, CheckerResult, EvidenceSpan, ReasonCode
 
             doc_id = ingest_result["doc_id"]
             all_checks = []
             all_verdicts = []
             page_map_entries = []
 
-            for page_info in ingest_result.get("pages", []):
+            # MC-KOS-40: Check page count limit
+            pages = ingest_result.get("pages", [])
+            if len(pages) > MAX_SCAN_PAGES:
+                limit_check = CheckerResult(
+                    checker_name="ScanLimitGuard",
+                    status=TrafficLight.YELLOW,
+                    reason=ReasonCode.SCAN_LIMIT_EXCEEDED,
+                    evidence=[EvidenceSpan(
+                        doc_id=doc_id,
+                        page_number=0,
+                        snippet=f"SCAN_ABORTED: page_count={len(pages)} exceeds max_pages={MAX_SCAN_PAGES}",
+                    )],
+                )
+                all_checks.append(limit_check.to_dict())
+                all_verdicts.append(TrafficLight.YELLOW)
+                pages = []  # Skip page processing
+
+            for page_info in pages:
                 page_num = page_info["page"]
                 raw_text = page_info.get("raw_text", "")
                 normalized = page_info.get("normalized_text_v1", "")
