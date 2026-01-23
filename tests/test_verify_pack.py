@@ -3,7 +3,7 @@
 Tests: 5 including 1 adversarial per Sniper process rules.
 - test_happy_path_valid_pack
 - test_missing_required_file_fails
-- test_adversarial_missing_offset_basis_fails
+- test_adversarial_malformed_checks_fails (parametrized: offset_basis, non-dict)
 - test_false_green_without_evidence_fails
 - test_cli_verify_pack
 """
@@ -85,30 +85,43 @@ class TestVerifyPack:
         assert ok is False
         assert missing_file in msg
 
-    def test_adversarial_missing_offset_basis_fails(self, tmp_path):
-        """ADVERSARIAL: Evidence with offsets but missing offset_basis fails."""
-        # Create evidence_pack with offsets but no offset_basis
-        evidence_pack = {
-            "overall_verdict": "red",
-            "checks": [
+    @pytest.mark.parametrize(
+        "pack_data,expected_msg_parts",
+        [
+            pytest.param(
                 {
-                    "check_id": "TestChecker",
-                    "verdict": "red",
-                    "evidence": [
+                    "overall_verdict": "red",
+                    "checks": [
                         {
-                            "doc_id": "test.pdf",
-                            "page": 1,
-                            "snippet": "KO phrase",
-                            "start_offset": 100,
-                            "end_offset": 120,
-                            # Missing offset_basis!
+                            "check_id": "TestChecker",
+                            "verdict": "red",
+                            "evidence": [
+                                {
+                                    "doc_id": "test.pdf",
+                                    "page": 1,
+                                    "snippet": "KO phrase",
+                                    "start_offset": 100,
+                                    "end_offset": 120,
+                                    # Missing offset_basis!
+                                }
+                            ],
                         }
                     ],
-                }
-            ],
-        }
+                },
+                ["offset_basis", "normalized_text_v1"],
+                id="missing_offset_basis",
+            ),
+            pytest.param(
+                {"overall_verdict": "red", "checks": ["garbage"]},
+                ["check[0]", "dict"],
+                id="non_dict_check_item",
+            ),
+        ],
+    )
+    def test_adversarial_malformed_checks_fails(self, tmp_path, pack_data, expected_msg_parts):
+        """ADVERSARIAL: Malformed checks fail-closed (offset_basis missing, non-dict items)."""
         with open(tmp_path / "evidence_pack.json", "w") as f:
-            json.dump(evidence_pack, f)
+            json.dump(pack_data, f)
 
         document_map = {
             "doc_id": "test.pdf",
@@ -120,8 +133,8 @@ class TestVerifyPack:
 
         ok, msg = verify_pack(str(tmp_path))
         assert ok is False
-        assert "offset_basis" in msg
-        assert "normalized_text_v1" in msg
+        for part in expected_msg_parts:
+            assert part in msg, f"Expected '{part}' in message: {msg}"
 
     def test_false_green_without_evidence_fails(self, tmp_path):
         """GREEN verdict without evidence fails (false-green prevention)."""

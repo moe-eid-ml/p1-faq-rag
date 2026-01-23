@@ -142,6 +142,8 @@ def _validate_worst_check_wins(overall_verdict: str, checks: List[Dict]) -> Tupl
 
     verdicts: List[str] = []
     for i, check in enumerate(checks):
+        if not isinstance(check, dict):
+            return False, f"check[{i}] must be a dict, got {type(check).__name__}"
         verdict = check.get("verdict")
         if not isinstance(verdict, str) or verdict.lower() not in VALID_VERDICTS:
             return False, (
@@ -172,6 +174,8 @@ def _validate_worst_check_wins(overall_verdict: str, checks: List[Dict]) -> Tupl
 def _validate_offset_basis(checks: List[Dict]) -> Tuple[bool, str]:
     """Validate all evidence with offsets has offset_basis='normalized_text_v1'."""
     for i, check in enumerate(checks):
+        if not isinstance(check, dict):
+            return False, f"check[{i}] must be a dict, got {type(check).__name__}"
         for j, ev in enumerate(check.get("evidence", [])):
             has_offsets = ev.get("start_offset") is not None or ev.get("end_offset") is not None
             if has_offsets:
@@ -191,7 +195,7 @@ def _validate_no_false_green(overall_verdict: str, checks: List[Dict]) -> Tuple[
 
     # GREEN requires at least one check with evidence
     has_evidence = any(
-        check.get("evidence") for check in checks
+        isinstance(check, dict) and check.get("evidence") for check in checks
     )
 
     if not has_evidence:
