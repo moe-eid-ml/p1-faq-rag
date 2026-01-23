@@ -17,9 +17,27 @@ from typing import Optional
 
 from kosniper.pipeline import make_evidence_pack
 
-# MC-KOS-40: Scan limits to prevent DoS / OOM
-MAX_PDF_BYTES = 50_000_000  # 50 MB
-MAX_SCAN_PAGES = 500
+# MC-KOS-40/45: Scan limits to prevent DoS / OOM (configurable via CLI/env)
+DEFAULT_MAX_PDF_BYTES = 50_000_000  # 50 MB
+DEFAULT_MAX_SCAN_PAGES = 500
+
+
+def _resolve_limit(cli_value, env_var: str, default: int) -> int:
+    """Resolve limit from CLI arg > env var > default. Returns int."""
+    import os
+    if cli_value is not None:
+        return int(cli_value)
+    env_val = os.environ.get(env_var)
+    if env_val is not None:
+        try:
+            return int(env_val)
+        except ValueError:
+            print(
+                f"Warning: Invalid {env_var}={env_val!r}, using default {default}",
+                file=sys.stderr,
+            )
+            return default
+    return default
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -77,6 +95,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         "--out-dir",
         help="Output directory for report pack (report.md + evidence_pack.json; requires --scan)",
     )
+    # MC-KOS-45: Configurable scan limits
+    parser.add_argument(
+        "--max-pdf-mb",
+        type=int,
+        help=f"Max PDF size in MB (default {DEFAULT_MAX_PDF_BYTES // 1_000_000}; env: KOSNIPER_MAX_PDF_BYTES)",
+    )
+    parser.add_argument(
+        "--max-scan-pages",
+        type=int,
+        help=f"Max pages to scan (default {DEFAULT_MAX_SCAN_PAGES}; env: KOSNIPER_MAX_SCAN_PAGES)",
+    )
 
     args = parser.parse_args(argv)
 
@@ -112,6 +141,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("Error: --out-dir requires --scan", file=sys.stderr)
         return 2
 
+    # MC-KOS-45: Resolve scan limits (CLI > env > default)
+    max_pdf_bytes = _resolve_limit(
+        args.max_pdf_mb * 1_000_000 if args.max_pdf_mb is not None else None,
+        "KOSNIPER_MAX_PDF_BYTES",
+        DEFAULT_MAX_PDF_BYTES,
+    )
+    max_scan_pages = _resolve_limit(
+        args.max_scan_pages,
+        "KOSNIPER_MAX_SCAN_PAGES",
+        DEFAULT_MAX_SCAN_PAGES,
+    )
+
     # PDF ingestion mode
     if args.pdf is not None:
         import os
@@ -124,7 +165,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(f"Error: {e}", file=sys.stderr)
             return 2
 
-        if file_size > MAX_PDF_BYTES:
+        if file_size > max_pdf_bytes:
             # Fail-closed with Yellow verdict (never Green without evidence)
             from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
             limit_check = CheckerResult(
@@ -134,7 +175,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                 evidence=[EvidenceSpan(
                     doc_id=args.pdf,
                     page_number=0,
-                    snippet=f"SCAN_ABORTED: file_size={file_size} exceeds max_bytes={MAX_PDF_BYTES}",
+                    snippet=f"SCAN_ABORTED: file_size={file_size} exceeds max_bytes={max_pdf_bytes}",
                 )],
             )
             doc_id = args.doc_id if args.doc_id else os.path.basename(args.pdf)
@@ -204,9 +245,9 @@ def main(argv: Optional[list[str]] = None) -> int:
             all_verdicts = []
             page_map_entries = []
 
-            # MC-KOS-40: Check page count limit
+            # MC-KOS-40/45: Check page count limit (configurable)
             pages = ingest_result.get("pages", [])
-            if len(pages) > MAX_SCAN_PAGES:
+            if len(pages) > max_scan_pages:
                 limit_check = CheckerResult(
                     checker_name="ScanLimitGuard",
                     status=TrafficLight.YELLOW,
@@ -214,7 +255,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                     evidence=[EvidenceSpan(
                         doc_id=doc_id,
                         page_number=0,
-                        snippet=f"SCAN_ABORTED: page_count={len(pages)} exceeds max_pages={MAX_SCAN_PAGES}",
+                        snippet=f"SCAN_ABORTED: page_count={len(pages)} exceeds max_pages={max_scan_pages}",
                     )],
                 )
                 all_checks.append(limit_check.to_dict())
