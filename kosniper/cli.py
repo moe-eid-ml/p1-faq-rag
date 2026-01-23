@@ -95,6 +95,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         "--out-dir",
         help="Output directory for report pack (report.md + evidence_pack.json; requires --scan)",
     )
+    parser.add_argument(
+        "--verify-pack",
+        action="store_true",
+        help="Verify an evidence pack directory",
+    )
+    parser.add_argument(
+        "--in-dir",
+        help="Input directory for --verify-pack",
+    )
     # MC-KOS-45: Configurable scan limits
     parser.add_argument(
         "--max-pdf-mb",
@@ -108,6 +117,19 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
 
     args = parser.parse_args(argv)
+
+    if args.verify_pack:
+        if args.in_dir is None:
+            print("Error: --verify-pack requires --in-dir", file=sys.stderr)
+            return 2
+        from kosniper.verify import verify_pack
+
+        ok, msg = verify_pack(args.in_dir)
+        if ok:
+            print("OK")
+            return 0
+        print(f"Error: {msg}", file=sys.stderr)
+        return 2
 
     # Count input modes
     input_modes = sum([
