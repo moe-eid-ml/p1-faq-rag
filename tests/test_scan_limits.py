@@ -39,11 +39,11 @@ class TestScanLimits:
 
     def test_file_size_limit_produces_yellow_with_document_map(self):
         """File size limit check produces Yellow verdict with evidence and document_map."""
-        from kosniper.cli import MAX_PDF_BYTES
+        from kosniper.cli import DEFAULT_MAX_PDF_BYTES
         from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficLight
 
         # Simulate the check that would happen in CLI
-        file_size = MAX_PDF_BYTES + 1
+        file_size = DEFAULT_MAX_PDF_BYTES + 1
         doc_id = "large.pdf"
         limit_check = CheckerResult(
             checker_name="ScanLimitGuard",
@@ -52,7 +52,7 @@ class TestScanLimits:
             evidence=[EvidenceSpan(
                 doc_id=doc_id,
                 page_number=0,
-                snippet=f"SCAN_ABORTED: file_size={file_size} exceeds max_bytes={MAX_PDF_BYTES}",
+                snippet=f"SCAN_ABORTED: file_size={file_size} exceeds max_bytes={DEFAULT_MAX_PDF_BYTES}",
             )],
         )
 

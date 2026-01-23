@@ -14,6 +14,7 @@
 - MC-KOS-42: Golden e2e tests locking v1 invariants (worst-check-wins, document_map, never-false-green, offset_basis)
 - MC-KOS-43: Export report pack (`--out-dir`) with report.md, evidence_pack.json, document_map.json
 - MC-KOS-44: Severity-aware ordering (RED checks first, then YELLOW, ABSTAIN, GREEN)
+- MC-KOS-45: Configurable scan limits (`--max-pdf-mb`, `--max-scan-pages`, env vars)
 
 ## [v0.1.2] — 2026-01-21
 ### Added
