@@ -104,6 +104,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         "--in-dir",
         help="Input directory for --verify-pack",
     )
+    parser.add_argument(
+        "--receipt",
+        action="store_true",
+        help="Write verify_receipt.json on successful verification (requires --verify-pack)",
+    )
     # MC-KOS-45: Configurable scan limits
     parser.add_argument(
         "--max-pdf-mb",
@@ -122,12 +127,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         if args.in_dir is None:
             print("Error: --verify-pack requires --in-dir", file=sys.stderr)
             return 2
-        from kosniper.verify import verify_pack
+        from kosniper.verify import verify_pack, write_receipt
 
         ok, msg = verify_pack(args.in_dir)
         if ok:
+            if args.receipt:
+                receipt_ok, receipt_msg = write_receipt(args.in_dir)
+                if not receipt_ok:
+                    print(f"Error: {receipt_msg}", file=sys.stderr)
+                    return 2
             print("OK")
             return 0
+        # Fail-closed: do not write receipt on verification failure
         print(f"Error: {msg}", file=sys.stderr)
         return 2
 

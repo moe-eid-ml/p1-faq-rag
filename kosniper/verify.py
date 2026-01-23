@@ -10,6 +10,7 @@ Fail-closed: any validation failure returns error tuple (False, reason).
 
 from __future__ import annotations
 
+import datetime
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -200,5 +201,70 @@ def _validate_no_false_green(overall_verdict: str, checks: List[Dict]) -> Tuple[
 
     if not has_evidence:
         return False, "False-green: overall_verdict=green but no evidence present"
+
+    return True, "OK"
+
+
+def write_receipt(in_dir: str) -> Tuple[bool, str]:
+    """Write verify_receipt.json to the input directory.
+
+    Only call this after verify_pack() returns (True, "OK").
+    Fail-closed: catches OSError and returns (False, error_msg).
+
+    Args:
+        in_dir: Path to directory containing the verified pack.
+
+    Returns:
+        (True, "OK") on success, (False, "error reason") on failure.
+    """
+    dir_path = Path(in_dir)
+    receipt_path = dir_path / "verify_receipt.json"
+
+    # Load document_map.json and evidence_pack.json to extract sha256 if present
+    doc_map_sha256 = None
+    evidence_pack_sha256 = None
+
+    try:
+        with open(dir_path / "document_map.json", encoding="utf-8") as f:
+            doc_map = json.load(f)
+            doc_map_sha256 = doc_map.get("overall_sha256")
+    except (OSError, json.JSONDecodeError):
+        pass  # Not critical for receipt
+
+    try:
+        with open(dir_path / "evidence_pack.json", encoding="utf-8") as f:
+            evidence_pack = json.load(f)
+            # evidence_pack doesn't have its own sha256 key by schema
+            # but check anyway for forward compatibility
+            evidence_pack_sha256 = evidence_pack.get("overall_sha256")
+    except (OSError, json.JSONDecodeError):
+        pass  # Not critical for receipt
+
+    # Get version if available
+    try:
+        from importlib.metadata import version as get_version
+        tool_version = get_version("p1-faq-rag")
+    except Exception:
+        tool_version = "unknown"
+
+    receipt = {
+        "status": "ok",
+        "tool": "kosniper",
+        "version": tool_version,
+        "checked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "in_dir": in_dir,
+    }
+
+    if doc_map_sha256 is not None:
+        receipt["document_map_sha256"] = doc_map_sha256
+    if evidence_pack_sha256 is not None:
+        receipt["evidence_pack_sha256"] = evidence_pack_sha256
+
+    try:
+        with open(receipt_path, "w", encoding="utf-8") as f:
+            json.dump(receipt, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+    except OSError as e:
+        return False, f"Failed to write verify_receipt.json: {e}"
 
     return True, "OK"
