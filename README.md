@@ -233,3 +233,6 @@ Or run `./scripts/demo.sh` to generate `evidence_pack.json`.
 
 ### Release
 See `docs/RELEASE.md` for v1 criteria and release checklist.
+
+## Start here
+- See [HANDOFF.md](HANDOFF.md)
