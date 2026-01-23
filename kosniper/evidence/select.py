@@ -1,10 +1,24 @@
-"""MC-KOS-35: Evidence selection policy.
+"""MC-KOS-35/44: Evidence selection policy.
 
 Applies deterministic filtering, sorting, deduplication, and truncation
 to evidence lists before output. Never fabricates evidence.
+
+MC-KOS-44: Severity-aware ordering ensures worst findings appear first.
 """
 
 from typing import Any, Dict, List, Optional, Tuple
+
+# Severity ranking: lower number = more severe (RED is worst)
+_SEVERITY_RANK = {"red": 0, "yellow": 1, "abstain": 2, "green": 3}
+
+
+def severity_rank(verdict: str) -> int:
+    """Return numeric severity rank for verdict (lower = more severe).
+
+    Ordering: red (0) > yellow (1) > abstain (2) > green (3).
+    Unknown verdicts sort last (4) for robustness.
+    """
+    return _SEVERITY_RANK.get(verdict.lower() if verdict else "", 4)
 
 
 def _sort_key(ev: Dict[str, Any]) -> Tuple:
@@ -47,6 +61,13 @@ def _truncate_snippet(ev: Dict[str, Any], max_len: int) -> Dict[str, Any]:
     return ev
 
 
+def _check_sort_key(item: tuple) -> tuple:
+    """Sort key for (index, check) tuple: severity first, then original index."""
+    idx, check = item
+    verdict = check.get("verdict", "green")
+    return (severity_rank(verdict), idx)
+
+
 def apply_evidence_policy(
     checks: List[Dict[str, Any]],
     *,
@@ -65,11 +86,18 @@ def apply_evidence_policy(
     Returns:
         New list of check dicts with filtered/formatted evidence.
         Never fabricates evidence; only filters what checkers produce.
+
+    MC-KOS-44: Checks are ordered by severity (RED first, then YELLOW,
+    ABSTAIN, GREEN) with original order as stable tiebreaker.
     """
+    # MC-KOS-44: Sort checks by severity (worst first), preserving original order as tiebreaker
+    indexed_checks = list(enumerate(checks))
+    indexed_checks.sort(key=_check_sort_key)
+
     result = []
     total_evidence = 0
 
-    for check in checks:
+    for _idx, check in indexed_checks:
         check = check.copy()
         evidence = check.get("evidence", [])
 
