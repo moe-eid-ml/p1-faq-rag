@@ -215,13 +215,24 @@ make ask Q="Bearbeitungszeit Wohngeld?" MODE=Hybrid K=5
 
 Bidder-side KO scanner for German public tenders. Proof-first, never false-green.
 
-```bash
-python -m kosniper.cli --pdf tests/fixtures/fixture_ko_page2.pdf --scan  # RED
-python -m kosniper.cli --pdf tests/fixtures/fixture_neutral.pdf --scan   # ABSTAIN
+### Install & Run
 
-# Export report pack (report.md + evidence_pack.json + document_map.json)
-python -m kosniper.cli --pdf tender.pdf --scan --out-dir ./report_pack
+```bash
+# Install (makes `kosniper` command available)
+pip install -e .
+
+# Scan a PDF
+kosniper --pdf tests/fixtures/fixture_ko_page2.pdf --scan        # RED
+kosniper --pdf tests/fixtures/fixture_neutral.pdf --scan         # ABSTAIN
+
+# Export report pack
+kosniper --pdf tender.pdf --scan --out-dir ./report_pack
+
+# Verify an existing report pack
+kosniper --verify-pack --in-dir ./report_pack
 ```
+
+**Fallback** (without install): `python -m kosniper.cli ...`
 
 Or run `./scripts/demo.sh` to generate `evidence_pack.json`.
 
