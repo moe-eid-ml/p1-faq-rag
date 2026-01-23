@@ -51,12 +51,16 @@ def verify_pack(in_dir: str) -> Tuple[bool, str]:
             evidence_pack = json.load(f)
     except json.JSONDecodeError as e:
         return False, f"Invalid JSON in evidence_pack.json: {e}"
+    except OSError as e:
+        return False, f"Error reading evidence_pack.json: {e}"
 
     try:
         with open(document_map_path, encoding="utf-8") as f:
             document_map = json.load(f)
     except json.JSONDecodeError as e:
         return False, f"Invalid JSON in document_map.json: {e}"
+    except OSError as e:
+        return False, f"Error reading document_map.json: {e}"
 
     # 4. Validate document_map structure
     doc_map_result = _validate_document_map(document_map)
