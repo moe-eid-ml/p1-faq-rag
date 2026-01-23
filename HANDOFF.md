@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # KOSniper Project Handoff
 
 ## What We're Building
@@ -66,3 +67,6 @@ Every assistant response should include:
 - Max 3 steps per output
 - Copy-paste squash title: `MC-KOS-XX: <description>`
 - PR description template with Summary + Test plan
+=======
+PASTE YOUR REAL HANDOFF SUMMARY (the big one you posted) HERE
+>>>>>>> origin/main
