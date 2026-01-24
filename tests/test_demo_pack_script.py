@@ -31,7 +31,7 @@ def test_dry_run_prints_commands_and_exits_0(tmp_path):
 
 def test_adversarial_missing_pdf_fails_closed_exit_2():
     """ADVERSARIAL: Missing PDF file fails-closed with exit 2."""
-    nonexistent_pdf = "/nonexistent/path/to/missing.pdf"
+    nonexistent_pdf = "/nonexistent/does-not-exist.pdf"
 
     result = subprocess.run(
         ["bash", str(SCRIPT_PATH), nonexistent_pdf],
