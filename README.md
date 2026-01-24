@@ -242,6 +242,9 @@ Or run `./scripts/demo.sh` to generate `evidence_pack.json`.
 - **Offset basis:** when offsets exist, offset_basis must be set (standard: `normalized_text_v1`)
 - **Deterministic CI:** `ruff check . && python -m compileall -q . && DISABLE_SEMANTIC=1 pytest -q`
 
+### Real Usage
+See [docs/REAL_USAGE.md](docs/REAL_USAGE.md) for copy-paste commands.
+
 ### Release
 See `docs/RELEASE.md` for v1 criteria and release checklist.
 
