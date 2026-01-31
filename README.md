@@ -249,4 +249,6 @@ See [docs/REAL_USAGE.md](docs/REAL_USAGE.md) for copy-paste commands.
 See `docs/RELEASE.md` for v1 criteria and release checklist.
 
 ## Start here
-- See [HANDOFF.md](HANDOFF.md)
+- [CLAUDE.md](CLAUDE.md) — single source of truth
+- [docs/REAL_USAGE.md](docs/REAL_USAGE.md) — demo commands
+- [HANDOFF.md](HANDOFF.md) — context (may be stale)
