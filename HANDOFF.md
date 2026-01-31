@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # KOSniper Project Handoff
 
 ## What We're Building
@@ -50,16 +49,15 @@ DISABLE_SEMANTIC=1 pytest -q
 
 ## Current Repo State
 
-- **Branch**: main @ 4520d1a
-- **Tests**: 258 passed, 8 skipped, 1 xfailed
+- WARNING: This file can be stale; see CLAUDE.md for current verified state.
+- **Branch**: main @ ed87b74
+- **Tests**: 274 passed, 8 skipped, 1 xfailed
 - **Working tree**: Clean
 
 ## Plan Forward
 
-1. **MC-KOS-46**: Add company profile integration (turnover threshold checker uses real data)
-2. **MC-KOS-47**: Multi-document batch scanning with merged report
-3. **MC-KOS-48**: CI/CD pipeline with GitHub Actions
-4. **v1.0 release**: Final checklist items from docs/RELEASE.md
+1. **Next**: docs consolidation (CLAUDE.md + README pointers)
+2. **Next**: run demo loop on 3–5 real tender PDFs (no ingestion yet)
 
 ## Output Format Reminder
 
@@ -67,6 +65,3 @@ Every assistant response should include:
 - Max 3 steps per output
 - Copy-paste squash title: `MC-KOS-XX: <description>`
 - PR description template with Summary + Test plan
-=======
-PASTE YOUR REAL HANDOFF SUMMARY (the big one you posted) HERE
->>>>>>> origin/main

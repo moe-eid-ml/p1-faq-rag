@@ -23,3 +23,34 @@ Working style:
 - Start with a short plan + file list.
 - Implement minimal diff + tests.
 - End with Backwards Walkthrough + 1 unsafe failure prevented.
+
+---
+
+## Current Verified State
+
+| Item | Value |
+|------|-------|
+| **Main HEAD** | `ed87b74` (MC-KOS-50) |
+| **Demo loop** | ✅ Works on fixture |
+| **Ingestion** | ⬜ Not started |
+
+## Gates (copy-paste)
+
+```bash
+ruff check . && python -m compileall -q . && DISABLE_SEMANTIC=1 pytest -q
+```
+
+## Demo Loop (the money path)
+
+```bash
+bash scripts/demo_pack.sh tests/fixtures/fixture_ko_page2.pdf --out-dir ~/kos_demo_out
+cat ~/kos_demo_out/verify_receipt.json
+```
+
+Expected: `"status": "ok"` + 4 artifacts.
+
+## Scope Boundaries
+
+- **In scope**: Demo loop with fixtures, fail-closed verification.
+- **Not started**: Real tender ingestion, batch processing.
+- **Parking lot**: New checker families, stale-hash validation.
