@@ -6,8 +6,9 @@
 > **Project status (2026-07-01): wrapped at v0.1.4.** This repo contains **two complete
 > learning projects**: the multilingual **Wohngeld FAQ RAG** app (this section) and
 > **[KOSniper](#kosniper-v01)**, a fail-closed KO scanner for German tender PDFs.
-> Both work, CI is green (274 tests), and no further work is planned — with one open
-> decision: extending KOSniper with an LLM evidence checker. See
+> Both work and CI is green. MC-KOS-51 **Phase 1** (mocked LLM evidence checker
+> skeleton, no new dependencies) landed after the wrap; the one open decision is
+> **Phase 2** (live SDK + first eval). See
 > [missions/MC-KOS-51-llm-evidence-checker.md](missions/MC-KOS-51-llm-evidence-checker.md).
 
 ![App screenshot](assets/ui.png)
@@ -263,4 +264,4 @@ See `docs/RELEASE.md` for v1 criteria and release checklist.
 - [CLAUDE.md](CLAUDE.md) — single source of truth
 - [docs/REAL_USAGE.md](docs/REAL_USAGE.md) — demo commands
 - [HANDOFF.md](HANDOFF.md) — context (may be stale)
-- [missions/MC-KOS-51-llm-evidence-checker.md](missions/MC-KOS-51-llm-evidence-checker.md) — the one open decision (LLM checker: go/no-go)
+- [missions/MC-KOS-51-llm-evidence-checker.md](missions/MC-KOS-51-llm-evidence-checker.md) — the one open decision (Phase 2 live SDK/eval: go/no-go)

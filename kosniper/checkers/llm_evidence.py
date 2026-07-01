@@ -19,7 +19,9 @@ from kosniper.contracts import CheckerResult, EvidenceSpan, ReasonCode, TrafficL
 from kosniper.evidence.spans import MAX_SPAN_SEARCH_CHARS, find_span
 from kosniper.llm_client import LLMClient, get_llm_client
 
-# Cap accepted findings per page; the rest are ignored (deterministic truncation)
+# Cap on *emitted* evidence spans per result. Verification always covers every
+# returned quote — capping before verification would let a fabricated quote
+# beyond the cap escape the poison-the-batch rule.
 MAX_FINDINGS = 5
 # Preview length for unverified-claim/malformed-output audit snippets
 CLAIM_PREVIEW_CHARS = 160
@@ -136,7 +138,7 @@ class LLMEvidenceChecker(Checker):
 
         verified: List[EvidenceSpan] = []
         unverified: List[str] = []
-        for quote in quotes[:MAX_FINDINGS]:
+        for quote in quotes:
             span = find_span(text, quote)
             if span is None:
                 unverified.append(quote)
@@ -165,7 +167,7 @@ class LLMEvidenceChecker(Checker):
                         page_number=page_number,
                         snippet=_claim_preview("unverified llm claim", quote),
                     )
-                    for quote in unverified
+                    for quote in unverified[:MAX_FINDINGS]
                 ],
             )
 
@@ -173,5 +175,5 @@ class LLMEvidenceChecker(Checker):
             checker_name=self.name,
             status=TrafficLight.YELLOW,
             reason=ReasonCode.LLM_KO_SIGNAL_VERIFIED,
-            evidence=verified,
+            evidence=verified[:MAX_FINDINGS],
         )

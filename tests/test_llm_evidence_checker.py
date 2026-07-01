@@ -4,7 +4,9 @@ No live LLM, no SDK, no network: a FakeClient returns canned output so every
 fail-closed path is exercised deterministically.
 """
 
-from kosniper.checkers.llm_evidence import LLMEvidenceChecker
+import json
+
+from kosniper.checkers.llm_evidence import MAX_FINDINGS, LLMEvidenceChecker
 from kosniper.contracts import ReasonCode, TrafficLight
 from kosniper.pipeline import run_single_page
 
@@ -74,6 +76,20 @@ def test_verified_quote_yields_yellow_with_offsets():
     assert ev.offset_basis == "normalized_text_v1"
     assert PAGE_TEXT[ev.start_offset : ev.end_offset].lower() == REAL_QUOTE.lower()
     assert REAL_QUOTE.lower() in ev.snippet.lower()
+
+
+def test_fabricated_quote_after_cap_still_poisons_batch():
+    """Adversarial (review finding): a fabricated quote beyond MAX_FINDINGS must
+    still poison the batch — verification covers ALL quotes, the cap applies
+    only to emitted evidence."""
+    real_quotes = ["Die Vergabestelle", "Mindestjahresumsatz", "zwingend", "Unterlagen", "beizufuegen"]
+    assert len(real_quotes) == MAX_FINDINGS  # fabricated quote lands exactly after the cap
+    findings = [{"quote": q} for q in real_quotes]
+    findings.append({"quote": "Frei erfundenes Zitat ohne Beleg im Text."})
+    checker = LLMEvidenceChecker(client=FakeClient(json.dumps({"findings": findings})))
+    result = checker.run(PAGE_TEXT, "doc.pdf", 1)
+    assert result.status == TrafficLight.ABSTAIN
+    assert result.reason == ReasonCode.LLM_QUOTE_NOT_FOUND
 
 
 def test_empty_findings_is_no_claim_not_green():

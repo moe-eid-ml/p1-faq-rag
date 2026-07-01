@@ -8,6 +8,8 @@
     any fabricated quote → ABSTAIN (poisons batch); all-verified → YELLOW max; inert in
     default pipeline (no live client in Phase 1)
   - Additive reason codes: `llm_output_malformed`, `llm_quote_not_found`, `llm_ko_signal_verified`
+  - Review fix (Codex): verify ALL returned quotes, cap only emitted evidence — a fabricated
+    quote beyond `MAX_FINDINGS` can no longer escape the poison-the-batch ABSTAIN
 - Open decision: MC-KOS-51 Phase 2 (live SDK + first eval) — go, or archive the repo.
 
 ## [v0.1.4] — 2026-07-01 — Wrap-up
