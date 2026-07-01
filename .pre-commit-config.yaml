@@ -3,6 +3,6 @@ repos:
   hooks:
   - id: codex-validate
     name: codex validate (Arabic-only Q/A)
-    entry: .venv/bin/codex validate
+    entry: .venv/bin/python -m tools.codex_cli.cli validate
     language: system
     pass_filenames: false

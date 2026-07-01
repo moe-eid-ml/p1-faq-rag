@@ -50,14 +50,20 @@ DISABLE_SEMANTIC=1 pytest -q
 ## Current Repo State
 
 - WARNING: This file can be stale; see CLAUDE.md for current verified state.
-- **Branch**: main @ ed87b74
-- **Tests**: 274 passed, 8 skipped, 1 xfailed
+- **Status**: Wrapped at v0.1.4 (2026-07-01) — complete as a learning project, no active work
+- **Tests**: 274 passed, 8 skipped, 1 xfailed (green at wrap)
 - **Working tree**: Clean
 
 ## Plan Forward
 
-1. **Next**: docs consolidation (CLAUDE.md + README pointers)
-2. **Next**: run demo loop on 3–5 real tender PDFs (no ingestion yet)
+One open decision, then done:
+
+1. ~~Decide MC-KOS-51 Phase 1~~ — **GO given 2026-07-01; mocked skeleton landed** (no new deps,
+   checker inert in default pipeline). See `missions/MC-KOS-51-llm-evidence-checker.md`.
+2. **Decide MC-KOS-51 Phase 2** (live SDK + first real eval)
+   - **Go** → approve the SDK dependency explicitly, wire a live client behind the existing
+     `LLMClient` Protocol in `kosniper/llm_client.py`, run first eval on fixtures
+   - **No-go** → archive: push main + tags, add "archived" to the README status block, close the repo
 
 ## Output Format Reminder
 

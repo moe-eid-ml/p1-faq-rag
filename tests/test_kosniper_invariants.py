@@ -233,6 +233,11 @@ def test_all_registered_checkers_have_trigger_input():
     for checker_cls in get_checker_classes():
         if checker_cls.__name__ == "KoExclusionPhraseChecker":
             continue
+        if checker_cls.__name__ == "LLMEvidenceChecker":
+            # MC-KOS-51 Phase 1: inert without a live client, so no default-constructed
+            # trigger input exists; finding path is covered with a mocked client in
+            # tests/test_llm_evidence_checker.py (incl. offset-pair consistency).
+            continue
         assert checker_cls.__name__ in _CHECKER_TRIGGER_INPUTS, (
             f"{checker_cls.__name__} missing from _CHECKER_TRIGGER_INPUTS"
         )

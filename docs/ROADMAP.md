@@ -1,5 +1,11 @@
 # Roadmap
 
+> **Historical document (wrap-up note, 2026-07-01).** The repo is wrapped at `v0.1.4` with
+> no active work; this roadmap is preserved as a record of the FAQ RAG finish-line plan.
+> The Core v1 KPI in §7 **was met** (TF-IDF `file_r@3 = 0.84`, `file_r@5 = 0.94` — see
+> README Results). The only open item repo-wide is
+> [missions/MC-KOS-51-llm-evidence-checker.md](../missions/MC-KOS-51-llm-evidence-checker.md).
+
 This document defines the finish line for `p1-faq-rag` and the prioritized work plan.
 
 ## Metrics & evaluation
