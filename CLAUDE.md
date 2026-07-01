@@ -30,11 +30,11 @@ Working style:
 
 | Item | Value |
 |------|-------|
-| **Status** | 🏁 Wrapped at `v0.1.4` (2026-07-01) — no active work |
-| **Gates** | ✅ Green at wrap (274 passed, 8 skipped, 1 xfailed) |
+| **Status** | 🏁 Wrapped at `v0.1.4` (2026-07-01); MC-KOS-51 Phase 1 (mocked LLM checker skeleton) landed after wrap |
+| **Gates** | ✅ Green |
 | **Demo loop** | ✅ Works on fixture |
 | **Ingestion** | ⬜ Not started (parked) |
-| **Open decision** | MC-KOS-51 LLM evidence checker — go/no-go: `missions/MC-KOS-51-llm-evidence-checker.md` |
+| **Open decision** | MC-KOS-51 **Phase 2** (live SDK + first eval) — go/no-go: `missions/MC-KOS-51-llm-evidence-checker.md` |
 
 ## Gates (copy-paste)
 
@@ -56,4 +56,6 @@ Expected: `"status": "ok"` + 4 artifacts.
 - **In scope**: Demo loop with fixtures, fail-closed verification.
 - **Not started**: Real tender ingestion, batch processing.
 - **Parking lot**: New checker families, stale-hash validation (see docs/parking-lot.md).
-- **Proposed, undecided**: MC-KOS-51 LLM evidence checker. Do not implement without an explicit go.
+- **Landed**: MC-KOS-51 Phase 1 — mocked LLM checker skeleton (inert by default; no new deps).
+- **Proposed, undecided**: MC-KOS-51 Phase 2 — live SDK + first eval. Do not implement without
+  an explicit go AND explicit dependency approval.

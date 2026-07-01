@@ -58,8 +58,11 @@ DISABLE_SEMANTIC=1 pytest -q
 
 One open decision, then done:
 
-1. **Decide MC-KOS-51** (LLM evidence checker) — see `missions/MC-KOS-51-llm-evidence-checker.md`
-   - **Go** → implement per the mission card (requires explicit dependency approval first)
+1. ~~Decide MC-KOS-51 Phase 1~~ — **GO given 2026-07-01; mocked skeleton landed** (no new deps,
+   checker inert in default pipeline). See `missions/MC-KOS-51-llm-evidence-checker.md`.
+2. **Decide MC-KOS-51 Phase 2** (live SDK + first real eval)
+   - **Go** → approve the SDK dependency explicitly, wire a live client behind the existing
+     `LLMClient` Protocol in `kosniper/llm_client.py`, run first eval on fixtures
    - **No-go** → archive: push main + tags, add "archived" to the README status block, close the repo
 
 ## Output Format Reminder

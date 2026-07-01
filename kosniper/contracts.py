@@ -39,6 +39,10 @@ class ReasonCode(str, Enum):
     MISSING_COMPANY_TURNOVER = "missing_company_turnover"
     BELOW_THRESHOLD = "below_threshold"
     SCAN_LIMIT_EXCEEDED = "scan_limit_exceeded"
+    # MC-KOS-51 (additive): LLM evidence checker
+    LLM_OUTPUT_MALFORMED = "llm_output_malformed"
+    LLM_QUOTE_NOT_FOUND = "llm_quote_not_found"
+    LLM_KO_SIGNAL_VERIFIED = "llm_ko_signal_verified"
 
 
 @dataclass(frozen=True)

@@ -1,8 +1,14 @@
 # Changelog
 
 ## [Unreleased]
-- Nothing planned. One open decision: MC-KOS-51 LLM evidence checker
-  (`missions/MC-KOS-51-llm-evidence-checker.md`) — go, or archive the repo.
+### Added
+- MC-KOS-51 Phase 1: LLM evidence checker skeleton (mocked, no new dependencies)
+  - `LLMClient` Protocol + `get_llm_client()` factory; `DISABLE_LLM=1` off-switch
+  - `LLMEvidenceChecker`: quote verification via span finder; malformed output → ABSTAIN;
+    any fabricated quote → ABSTAIN (poisons batch); all-verified → YELLOW max; inert in
+    default pipeline (no live client in Phase 1)
+  - Additive reason codes: `llm_output_malformed`, `llm_quote_not_found`, `llm_ko_signal_verified`
+- Open decision: MC-KOS-51 Phase 2 (live SDK + first eval) — go, or archive the repo.
 
 ## [v0.1.4] — 2026-07-01 — Wrap-up
 ### Changed

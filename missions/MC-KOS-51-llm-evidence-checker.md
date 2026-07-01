@@ -1,9 +1,16 @@
-# MC-KOS-51 (PROPOSED): LLM Evidence Checker
+# MC-KOS-51: LLM Evidence Checker
 
-**Status: PROPOSED — go/no-go decision pending. Not scheduled. Nothing in this card is implemented.**
+**Status: Phase 1 (mocked skeleton) — GO given 2026-07-01, implemented. Phase 2 (live SDK
++ first real eval) — UNDECIDED, requires explicit dependency approval before any work.**
 
-This is the one open decision left after the v0.1.4 wrap-up: extend KOSniper with a
-single LLM-backed checker, or archive the repo as a complete learning project.
+Phase split (agreed with reviewer):
+- **Phase 1 (done)**: no new dependencies. `LLMClient` Protocol + `get_llm_client()` factory
+  (`kosniper/llm_client.py`), `LLMEvidenceChecker` (`kosniper/checkers/llm_evidence.py`)
+  registered but inert in the default pipeline (factory returns None → checker returns None,
+  so default output is byte-identical). Mocked-client tests cover malformed JSON, fabricated
+  quote (poisons the batch), verified quote, empty findings, and disabled-by-default.
+- **Phase 2 (undecided)**: add a real SDK behind the same Protocol, run the first live eval
+  against fixtures/goldset. Separate go/no-go; `DISABLE_LLM=1` stays the hard off-switch.
 
 ## Why this mission exists
 

@@ -3,6 +3,7 @@
 from kosniper.checkers.registry import get_checker_classes
 from kosniper.checkers.ko_exclusion_phrase_check import KoExclusionPhraseChecker
 from kosniper.checkers.ko_keyword_check import KoKeywordChecker
+from kosniper.checkers.llm_evidence import LLMEvidenceChecker
 from kosniper.checkers.minimal_ko_phrase import MinimalKoPhraseChecker
 from kosniper.checkers.turnover_threshold import TurnoverThresholdChecker
 from kosniper.pipeline import run_single_page
@@ -26,7 +27,13 @@ class TestRegistryDeterminism:
 
     def test_registry_order_matches_expected(self):
         """Explicit order assertion to catch accidental reordering."""
-        expected = (KoKeywordChecker, KoExclusionPhraseChecker, MinimalKoPhraseChecker, TurnoverThresholdChecker)
+        expected = (
+            KoKeywordChecker,
+            KoExclusionPhraseChecker,
+            MinimalKoPhraseChecker,
+            TurnoverThresholdChecker,
+            LLMEvidenceChecker,
+        )
         assert get_checker_classes() == expected
 
     def test_no_duplicate_checkers_in_registry(self):
