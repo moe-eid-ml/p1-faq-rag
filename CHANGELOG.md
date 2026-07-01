@@ -1,9 +1,21 @@
 # Changelog
 
 ## [Unreleased]
-- (planned) Split modules fully (`ui.py`, `retrieval.py`, etc.)
-- (planned) CI badge + README polish (complete)
-- (planned) Add "Hybrid" tweaks & better eval set (20 DE queries)
+- Nothing planned. One open decision: MC-KOS-51 LLM evidence checker
+  (`missions/MC-KOS-51-llm-evidence-checker.md`) — go, or archive the repo.
+
+## [v0.1.4] — 2026-07-01 — Wrap-up
+### Changed
+- Repo wrapped as a complete learning project (FAQ RAG + KOSniper v0.1); gates green at wrap
+- README: project-status banner + two-project framing (FAQ RAG and KOSniper)
+- CLAUDE.md / HANDOFF.md: state tables updated to wrapped status
+- Untracked `build/index.json` (build artifact; reproducible via `codex embed`)
+- Pruned local branches already merged into main
+### Added
+- `missions/MC-KOS-51-llm-evidence-checker.md` — PROPOSED LLM checker, go/no-go pending
+
+> Note on tags: `v0.1`, `v0.1.1`, `v1.0.0` are legacy FAQ-RAG-era tags. The `v0.1.x`
+> series in this changelog tracks the combined repo (KOSniper from v0.1.2 on).
 
 ## [v0.1.3] — 2026-01-22
 ### Added

@@ -50,14 +50,17 @@ DISABLE_SEMANTIC=1 pytest -q
 ## Current Repo State
 
 - WARNING: This file can be stale; see CLAUDE.md for current verified state.
-- **Branch**: main @ ed87b74
-- **Tests**: 274 passed, 8 skipped, 1 xfailed
+- **Status**: Wrapped at v0.1.4 (2026-07-01) — complete as a learning project, no active work
+- **Tests**: 274 passed, 8 skipped, 1 xfailed (green at wrap)
 - **Working tree**: Clean
 
 ## Plan Forward
 
-1. **Next**: docs consolidation (CLAUDE.md + README pointers)
-2. **Next**: run demo loop on 3–5 real tender PDFs (no ingestion yet)
+One open decision, then done:
+
+1. **Decide MC-KOS-51** (LLM evidence checker) — see `missions/MC-KOS-51-llm-evidence-checker.md`
+   - **Go** → implement per the mission card (requires explicit dependency approval first)
+   - **No-go** → archive: push main + tags, add "archived" to the README status block, close the repo
 
 ## Output Format Reminder
 

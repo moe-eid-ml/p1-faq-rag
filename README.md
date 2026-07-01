@@ -3,6 +3,13 @@
 [![Live Demo](https://img.shields.io/badge/%F0%9F%A4%97-Live%20Demo-blue)](https://huggingface.co/spaces/HFHQ92/wohngeld-faq-rag)
 [![CI](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/moe-eid-ml/p1-faq-rag/actions/workflows/ci.yml)
 
+> **Project status (2026-07-01): wrapped at v0.1.4.** This repo contains **two complete
+> learning projects**: the multilingual **Wohngeld FAQ RAG** app (this section) and
+> **[KOSniper](#kosniper-v01)**, a fail-closed KO scanner for German tender PDFs.
+> Both work, CI is green (274 tests), and no further work is planned — with one open
+> decision: extending KOSniper with an LLM evidence checker. See
+> [missions/MC-KOS-51-llm-evidence-checker.md](missions/MC-KOS-51-llm-evidence-checker.md).
+
 ![App screenshot](assets/ui.png)
 
 Compact RAG app for German **Wohngeld** questions. Dual retrievers (TF-IDF, Semantic) + optional Hybrid fusion. Gradio UI with in-app evaluation + CLI eval. Deployed on Hugging Face.
@@ -252,3 +259,4 @@ See `docs/RELEASE.md` for v1 criteria and release checklist.
 - [CLAUDE.md](CLAUDE.md) — single source of truth
 - [docs/REAL_USAGE.md](docs/REAL_USAGE.md) — demo commands
 - [HANDOFF.md](HANDOFF.md) — context (may be stale)
+- [missions/MC-KOS-51-llm-evidence-checker.md](missions/MC-KOS-51-llm-evidence-checker.md) — the one open decision (LLM checker: go/no-go)
