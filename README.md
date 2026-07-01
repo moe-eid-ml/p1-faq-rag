@@ -35,6 +35,8 @@ Dual-mode retrieval (Semantic vs TF-IDF) with language gating, filename filters,
 
 ## Definition of Done (core “ready”)
 
+*(Historical — this finish line was reached; repo wrapped at v0.1.4. See status banner above.)*
+
 This project is considered **done** when:
 
 - ✅ **Demo works:** HF Space loads and answers queries (no crashes).
@@ -46,6 +48,8 @@ This project is considered **done** when:
 - ✅ **Docs match reality:** README Quickstart + Demo steps reflect current behavior.
 
 ## Core TODO (finish line)
+
+*(Historical — preserved as a record of the plan; no active work. See status banner above.)*
 
 In priority order:
 

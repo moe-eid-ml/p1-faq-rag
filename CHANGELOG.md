@@ -11,6 +11,8 @@
 - CLAUDE.md / HANDOFF.md: state tables updated to wrapped status
 - Untracked `build/index.json` (build artifact; reproducible via `codex embed`)
 - Pruned local branches already merged into main
+- Fixed `codex-validate` pre-commit hook (module invocation replaces lost `codex` entrypoint)
+- Marked FAQ-RAG roadmap/TODO docs as historical (README sections, docs/ROADMAP.md)
 ### Added
 - `missions/MC-KOS-51-llm-evidence-checker.md` — PROPOSED LLM checker, go/no-go pending
 

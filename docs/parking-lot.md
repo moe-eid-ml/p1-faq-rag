@@ -11,7 +11,7 @@ Anything that is not required to satisfy the current PR acceptance criteria goes
 - **Stale-hash validation** — parked indefinitely.
 - **Remote branch cleanup** — stale branches still exist on `origin`; local merged branches
   were pruned at wrap-up. Delete remote ones whenever convenient.
-- **Broken pre-commit hook** — `codex-validate` expects `.venv/bin/codex`, which is no longer
-  installed (packaging for `tools/codex_cli` was lost in a venv rebuild). The wrap-up commit
-  used `SKIP=codex-validate` (no FAQ-corpus changes). Fix or remove the hook if resuming work.
+- ~~**Broken pre-commit hook**~~ — `codex-validate` expected `.venv/bin/codex`, lost in a venv
+  rebuild. **Fixed at wrap-up**: the hook now calls `.venv/bin/python -m tools.codex_cli.cli validate`
+  (no separate install needed).
 
